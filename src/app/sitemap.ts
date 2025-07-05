@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 import path from "path";
 
 const URL = "https://www.nodara.network";
-const baseDir = "app";
+const baseDir = "src/app";
 const dynamicDirs = [""];
 const excludeDirs = [""];
 
