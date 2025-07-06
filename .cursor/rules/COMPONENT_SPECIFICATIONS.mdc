@@ -1,0 +1,258 @@
+# Nodara Network Dashboard - Component Specifications
+
+## Layout Components
+
+### MainLayout
+- **Description**: Root layout component that provides the base structure for the dashboard
+- **Features**:
+  - Responsive container
+  - Navigation structure
+  - Theme provider integration
+  - Authentication wrapper
+
+### Navbar
+- **Description**: Top navigation bar with key controls and user information
+- **Features**:
+  - Wallet connection button
+  - User profile menu
+  - Navigation links
+  - Network status indicator
+  - Theme toggle
+
+### Sidebar
+- **Description**: Main navigation sidebar with categorized menu items
+- **Features**:
+  - Collapsible menu structure
+  - Active route highlighting
+  - Icon + text navigation items
+  - Quick access shortcuts
+
+## Service Marketplace Components
+
+### ServiceCatalog
+- **Description**: Grid display of available services
+- **Features**:
+  - Service cards
+  - Filter controls
+  - Search functionality
+  - Sorting options
+  - Pagination
+
+### ServiceCard
+- **Description**: Individual service display component
+- **Features**:
+  - Service icon/image
+  - Price display
+  - Quick action buttons
+  - Status indicator
+  - Rating display
+
+### ServiceDetailModal
+- **Description**: Detailed view of a selected service
+- **Features**:
+  - Complete service information
+  - Provider details
+  - Pricing breakdown
+  - Booking interface
+  - Historical metrics
+
+### ServiceRequestForm
+- **Description**: Form for configuring and requesting services
+- **Features**:
+  - Service parameters
+  - Price calculator
+  - SLA options
+  - Payment method selection
+  - Confirmation flow
+
+## Device Map Components
+
+### GlobalMap
+- **Description**: Interactive map showing node distribution
+- **Features**:
+  - Real-time node markers
+  - Cluster visualization
+  - Region highlighting
+  - Interactive tooltips
+  - Zoom controls
+
+### MapFilters
+- **Description**: Control panel for map visualization
+- **Features**:
+  - Service type filters
+  - Location filters
+  - Status filters
+  - Custom search
+  - Filter combinations
+
+### NodeMarker
+- **Description**: Individual node representation on map
+- **Features**:
+  - Status indicator
+  - Quick info tooltip
+  - Click interaction
+  - Custom icons by type
+  - Animation states
+
+## Analytics Components
+
+### AnalyticsDashboard
+- **Description**: Main analytics view with key metrics
+- **Features**:
+  - Metric cards
+  - Chart displays
+  - Time period selector
+  - Export options
+  - Custom views
+
+### MetricCard
+- **Description**: Individual metric display component
+- **Features**:
+  - Current value
+  - Trend indicator
+  - Historical sparkline
+  - Comparison values
+  - Interactive tooltip
+
+### AnalyticsChart
+- **Description**: Configurable chart component
+- **Features**:
+  - Multiple chart types
+  - Interactive tooltips
+  - Time range selection
+  - Data filtering
+  - Export capability
+
+### CustomReport
+- **Description**: Report builder interface
+- **Features**:
+  - Metric selection
+  - Layout configuration
+  - Time range settings
+  - Export options
+  - Save/load templates
+
+## Payment Components
+
+### WalletConnect
+- **Description**: Wallet connection and management
+- **Features**:
+  - Multiple wallet support
+  - Connection status
+  - Balance display
+  - Transaction history
+  - Quick actions
+
+### PaymentFlow
+- **Description**: Step-by-step payment process
+- **Features**:
+  - Amount input
+  - Token selection
+  - Fee calculator
+  - Confirmation step
+  - Receipt generation
+
+### TransactionHistory
+- **Description**: List of past transactions
+- **Features**:
+  - Transaction details
+  - Status tracking
+  - Filter options
+  - Export capability
+  - Pagination
+
+## Node Provider Components
+
+### ProviderDashboard
+- **Description**: Main view for node providers
+- **Features**:
+  - Earnings overview
+  - Service status
+  - Performance metrics
+  - Quick actions
+  - Notifications
+
+### EarningsTracker
+- **Description**: Detailed earnings management
+- **Features**:
+  - Revenue charts
+  - Payment history
+  - Payout settings
+  - Tax information
+  - Export options
+
+### ServiceManager
+- **Description**: Service configuration interface
+- **Features**:
+  - Service toggle controls
+  - Price configuration
+  - Availability scheduler
+  - Resource allocation
+  - Performance settings
+
+## Security Components
+
+### TrustScoreDisplay
+- **Description**: Trust and reputation visualization
+- **Features**:
+  - Score breakdown
+  - History tracking
+  - Improvement tips
+  - Comparison metrics
+  - Status indicators
+
+### DisputeManager
+- **Description**: Interface for handling disputes
+- **Features**:
+  - Dispute creation
+  - Status tracking
+  - Evidence upload
+  - Communication thread
+  - Resolution flow
+
+## Shared Components
+
+### DataTable
+- **Description**: Reusable table component
+- **Features**:
+  - Sorting
+  - Filtering
+  - Pagination
+  - Column customization
+  - Export options
+
+### StatusBadge
+- **Description**: Visual status indicator
+- **Features**:
+  - Multiple states
+  - Custom colors
+  - Icon support
+  - Tooltip information
+  - Animation states
+
+### SearchBar
+- **Description**: Advanced search component
+- **Features**:
+  - Auto-complete
+  - Filter suggestions
+  - Recent searches
+  - Search history
+  - Advanced filters
+
+### NotificationCenter
+- **Description**: System-wide notifications
+- **Features**:
+  - Real-time updates
+  - Priority levels
+  - Action buttons
+  - Grouping
+  - Clear/mark read
+
+### LoadingStates
+- **Description**: Collection of loading indicators
+- **Features**:
+  - Skeleton loaders
+  - Spinners
+  - Progress bars
+  - Error states
+  - Empty states 
