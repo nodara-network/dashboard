@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
+import { WalletProvider } from "@/contexts/WalletContext";
 
 export const metadata: Metadata = {
   title: "nodara - Rent Smartphone Compute Power",
@@ -16,7 +17,9 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <GoogleAnalytics />
-        {children}
+        <WalletProvider>
+          {children}
+        </WalletProvider>
       </body>
     </html>
   );
