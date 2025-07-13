@@ -128,7 +128,7 @@ export default function Navbar() {
                     transition-all duration-200 group relative
                     ${isActive
                       ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400'
-                      : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'
+                      : 'text-gray-600 dark:text-gray-300 '
                     }
                   `}
                   title={item.description}
@@ -139,6 +139,8 @@ export default function Navbar() {
                     }`}
                   />
                   <span>{item.name}</span>
+                  
+                  <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 to-teal-400 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-200 ease-out" />
                   
                   {/* Active indicator dot */}
                   {isActive && (
@@ -170,7 +172,7 @@ export default function Navbar() {
                 {isConnecting ? 'Connecting...' : isWalletConnected ? 'Connected' : 'Connect Wallet'}
               </span>
             </button>
-
+             
             {/* User Profile Menu */}
             <div className="relative">
               <button
