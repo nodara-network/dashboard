@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { WalletProvider } from "@/contexts/WalletContext";
+import TaskProviderWrapper from "@/components/TaskProviderWrapper";
 
 export const metadata: Metadata = {
   title: "nodara - Rent Smartphone Compute Power",
@@ -18,7 +19,9 @@ export default function RootLayout({
       <body>
         <GoogleAnalytics />
         <WalletProvider>
-          {children}
+          <TaskProviderWrapper>
+            {children}
+          </TaskProviderWrapper>
         </WalletProvider>
       </body>
     </html>

@@ -5,84 +5,28 @@ import PageLayout from "@/components/layout/PageLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import MetricCard from "@/components/ui/MetricCard";
 import ChartCard from "@/components/ui/ChartCard";
-
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  reward: number;
-  responses: number;
-  maxResponses: number;
-  deadline: Date;
-  status: 'active' | 'completed' | 'cancelled';
-  creator: string;
-  cid: string;
-}
+import { useTaskContext } from '@/contexts/TaskContext';
+import { CreateTaskData } from '@/types/tasks';
+import TaskTest from '@/components/tasks/TaskTest';
 
 export default function TasksPage() {
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'create'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'create' | 'test'>('all');
+  const { 
+    tasks, 
+    loading, 
+    error, 
+    createTask,
+    getTasksByStatus 
+  } = useTaskContext();
 
-  // Mock data - replace with actual smart contract data
-  const mockTasks: Task[] = [
-    {
-      id: '1',
-      title: 'Image Processing Task',
-      description: 'Process and analyze satellite imagery for agricultural monitoring',
-      reward: 0.5,
-      responses: 3,
-      maxResponses: 5,
-      deadline: new Date(Date.now() + 86400000),
-      status: 'active',
-      creator: '0x1234...5678',
-      cid: 'QmX...abc'
-    },
-    {
-      id: '2',
-      title: 'Data Analysis Request',
-      description: 'Analyze customer behavior patterns from e-commerce dataset',
-      reward: 1.2,
-      responses: 2,
-      maxResponses: 3,
-      deadline: new Date(Date.now() + 172800000),
-      status: 'active',
-      creator: '0x8765...4321',
-      cid: 'QmY...def'
-    },
-    {
-      id: '3',
-      title: 'ML Model Training',
-      description: 'Train a sentiment analysis model on social media data',
-      reward: 2.0,
-      responses: 1,
-      maxResponses: 2,
-      deadline: new Date(Date.now() - 3600000),
-      status: 'completed',
-      creator: '0xabcd...efgh',
-      cid: 'QmZ...ghi'
-    },
-    {
-      id: '4',
-      title: 'Text Classification',
-      description: 'Classify news articles into categories',
-      reward: 0.8,
-      responses: 0,
-      maxResponses: 4,
-      deadline: new Date(Date.now() + 259200000),
-      status: 'active',
-      creator: '0x1234...5678',
-      cid: 'QmA...jkl'
-    }
-  ];
+  const filteredTasks = activeTab === 'all' 
+    ? tasks 
+    : getTasksByStatus(activeTab as 'active' | 'completed' | 'cancelled');
 
-  const filteredTasks = mockTasks.filter(task => {
-    if (activeTab === 'all') return true;
-    return task.status === activeTab;
-  });
-
-  const totalTasks = mockTasks.length;
-  const activeTasks = mockTasks.filter(task => task.status === 'active').length;
-  const completedTasks = mockTasks.filter(task => task.status === 'completed').length;
-  const totalRewards = mockTasks.reduce((sum, task) => sum + task.reward, 0);
+  const totalTasks = tasks.length;
+  const activeTasks = getTasksByStatus('active').length;
+  const completedTasks = getTasksByStatus('completed').length;
+  const totalRewards = tasks.reduce((sum, task) => sum + task.reward, 0);
 
   const stats = [
     { label: "Total Tasks", value: totalTasks.toString() },
@@ -115,10 +59,17 @@ export default function TasksPage() {
             key={index}
             label={stat.label}
             value={stat.value}
-            isLoading={false}
+            isLoading={loading}
           />
         ))}
       </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
+          <p className="text-red-800 dark:text-red-400">{error}</p>
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex space-x-1 mb-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg p-1 border border-gray-200 dark:border-gray-700">
@@ -126,7 +77,8 @@ export default function TasksPage() {
           { id: 'all', label: 'All Tasks' },
           { id: 'active', label: 'Active' },
           { id: 'completed', label: 'Completed' },
-          { id: 'create', label: 'Create Task' }
+          { id: 'create', label: 'Create Task' },
+          { id: 'test', label: 'Test Integration' }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -145,14 +97,17 @@ export default function TasksPage() {
       {/* Content */}
       {activeTab === 'create' ? (
         <CreateTaskForm onCancel={() => setActiveTab('all')} />
+      ) : activeTab === 'test' ? (
+        <TaskTest />
       ) : (
-        <TaskList tasks={filteredTasks} />
+        <TaskList tasks={filteredTasks} loading={loading} />
       )}
     </PageLayout>
   );
 }
 
 function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
+  const { createTask, loading } = useTaskContext();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -162,11 +117,24 @@ function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
     cid: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Integrate with smart contract
-    console.log('Creating task:', formData);
-    onCancel();
+    
+    try {
+      const taskData: CreateTaskData = {
+        taskId: Date.now(), // Generate unique task ID
+        rewardPerResponse: parseFloat(formData.reward),
+        maxResponses: parseInt(formData.maxResponses),
+        deadline: new Date(formData.deadline),
+        cid: formData.cid
+      };
+
+      const signature = await createTask(taskData);
+      console.log('Task created successfully:', signature);
+      onCancel();
+    } catch (error) {
+      console.error('Failed to create task:', error);
+    }
   };
 
   return (
@@ -266,14 +234,16 @@ function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
         <div className="flex space-x-4">
           <button
             type="submit"
-            className="px-6 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg font-medium hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-all duration-200"
+            disabled={loading}
+            className="px-6 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg font-medium hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-all duration-200 disabled:opacity-50"
           >
-            Create Task
+            {loading ? 'Creating...' : 'Create Task'}
           </button>
           <button
             type="button"
             onClick={onCancel}
-            className="px-6 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200"
+            disabled={loading}
+            className="px-6 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 disabled:opacity-50"
           >
             Cancel
           </button>
@@ -283,14 +253,21 @@ function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
   );
 }
 
-function TaskList({ tasks }: { tasks: Task[] }) {
+function TaskList({ tasks, loading }: { tasks: any[], loading: boolean }) {
   return (
     <ChartCard
       title="Task List"
       description="Manage your distributed compute tasks"
     >
       <div className="space-y-4">
-        {tasks.length === 0 ? (
+        {loading ? (
+          <div className="text-center py-12">
+            <div className="text-gray-500 dark:text-gray-400 mb-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto"></div>
+            </div>
+            <p className="text-gray-600 dark:text-gray-400">Loading tasks...</p>
+          </div>
+        ) : tasks.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-500 dark:text-gray-400 mb-4">
               <svg className="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -310,7 +287,7 @@ function TaskList({ tasks }: { tasks: Task[] }) {
   );
 }
 
-function TaskCard({ task }: { task: Task }) {
+function TaskCard({ task }: { task: any }) {
   const timeLeft = task.deadline > new Date() 
     ? Math.ceil((task.deadline.getTime() - Date.now()) / (1000 * 60 * 60))
     : 0;
