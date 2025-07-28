@@ -2,14 +2,14 @@
 
 import React from 'react';
 import { useTaskContext } from '@/contexts/TaskContext';
-import { useWallet } from '@/contexts/WalletContext';
+import { useWallet } from '@solana/wallet-adapter-react';
 
 export default function TaskTest() {
   const { tasks, loading, error, createTask } = useTaskContext();
-  const { wallet, walletAddress } = useWallet();
+  const { publicKey, connected } = useWallet();
 
   const handleTestCreate = async () => {
-    if (!wallet?.publicKey) {
+    if (!publicKey) {
       alert('Please connect your wallet first');
       return;
     }
@@ -44,8 +44,8 @@ export default function TaskTest() {
         <div className="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
           <h4 className="font-medium text-gray-900 dark:text-white mb-2">Wallet Status</h4>
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            <div>Connected: {wallet ? 'Yes' : 'No'}</div>
-            <div>Address: {walletAddress || 'Not connected'}</div>
+            <div>Connected: {connected ? 'Yes' : 'No'}</div>
+            <div>Address: {publicKey?.toString() || 'Not connected'}</div>
           </div>
         </div>
 
@@ -64,7 +64,7 @@ export default function TaskTest() {
           <h4 className="font-medium text-gray-900 dark:text-white mb-2">Test Actions</h4>
           <button
             onClick={handleTestCreate}
-            disabled={!wallet || loading}
+            disabled={!connected || loading}
             className="px-4 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg font-medium hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-all duration-200 disabled:opacity-50"
           >
             {loading ? 'Creating...' : 'Create Test Task'}

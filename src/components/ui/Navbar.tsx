@@ -5,7 +5,8 @@ import { logoFont } from '@/fonts/logoFont';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
-import { useWallet } from '@/contexts/WalletContext';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletButton } from '@/components/solana/SolanaProvider';
 import { 
   ChartBarIcon,
   DevicePhoneMobileIcon,
@@ -68,22 +69,17 @@ export default function Navbar() {
   const pathname = usePathname();
 
   const {
-    wallet,
-    walletAddress,
-    isConnecting,
-    availableWallets,
-    connectWallet,
-    disconnectWallet,
-    showWalletModal,
-    setShowWalletModal
+    publicKey,
+    connected,
+    connecting,
+    disconnect
   } = useWallet();
 
-  const isWalletConnected = useMemo(() => !!wallet?.publicKey, [wallet?.publicKey]);
+  const isWalletConnected = useMemo(() => connected, [connected]);
   useEffect(() => {
     setIsMobileMenuOpen(false);
     setIsProfileMenuOpen(false);
-    setShowWalletModal(false);
-  }, [pathname, setShowWalletModal]);
+  }, [pathname]);
 
   const handleProfileMenuToggle = useCallback(() => {
     setIsProfileMenuOpen(!isProfileMenuOpen);
@@ -162,23 +158,9 @@ export default function Navbar() {
           <div className="flex items-center space-x-2">
 
             {/* Wallet Connect Button */}
-            <button
-              onClick={() => isWalletConnected ? disconnectWallet() : setShowWalletModal(true)}
-              disabled={isConnecting}
-              className={`
-                hidden md:flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium
-                transition-all duration-200 border disabled:opacity-50
-                ${isWalletConnected
-                  ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800'
-                  : 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800 hover:bg-cyan-200 dark:hover:bg-cyan-900/50'
-                }
-              `}
-            >
-              <WalletIcon className="w-4 h-4" />
-              <span>
-                {isConnecting ? 'Connecting...' : isWalletConnected ? 'Connected' : 'Connect Wallet'}
-              </span>
-            </button>
+            <div className="hidden md:flex">
+              <WalletButton />
+            </div>
              
             {/* User Profile Menu */}
             <div className="relative">
@@ -214,10 +196,10 @@ export default function Navbar() {
                       </div>
                       <div>
                                                <p className="text-sm font-medium text-gray-900 dark:text-white">
-                         {isWalletConnected ? 'User' : 'Not Connected'}
+                         {connected ? 'User' : 'Not Connected'}
                        </p>
                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                         {isWalletConnected && walletAddress ? formatAddress(walletAddress) : 'Connect wallet to continue'}
+                         {connected && publicKey ? formatAddress(publicKey.toString()) : 'Connect wallet to continue'}
                        </p>
                       </div>
                     </div>
@@ -240,16 +222,9 @@ export default function Navbar() {
 
                    {/* Menu Items */}
                    <div className="py-1">
-                     <button
-                       onClick={() => isWalletConnected ? disconnectWallet() : setShowWalletModal(true)}
-                       disabled={isConnecting}
-                       className="w-full flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-                     >
-                       <WalletIcon className="w-4 h-4" />
-                       <span>
-                         {isConnecting ? 'Connecting...' : isWalletConnected ? 'Disconnect Wallet' : 'Connect Wallet'}
-                       </span>
-                     </button>
+                     <div className="px-4 py-2">
+                       <WalletButton />
+                     </div>
                     
                     <Link
                       href="/profile"
@@ -313,23 +288,9 @@ export default function Navbar() {
         `}
       >
         <div className="space-y-1 px-4 pb-3 pt-2">
-          <button
-            onClick={() => isWalletConnected ? disconnectWallet() : setShowWalletModal(true)}
-            disabled={isConnecting}
-            className={`
-              w-full flex items-center space-x-2 px-3 py-2 rounded-lg text-base font-medium
-              transition-all duration-200 border mb-2 disabled:opacity-50
-              ${isWalletConnected
-                ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800'
-                : 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800'
-              }
-            `}
-          >
-            <WalletIcon className="w-5 h-5" />
-            <span>
-              {isConnecting ? 'Connecting...' : isWalletConnected ? 'Connected' : 'Connect Wallet'}
-            </span>
-          </button>
+          <div className="mb-2">
+            <WalletButton />
+          </div>
 
           {navigation.map((item) => {
             const isActive = pathname === item.href;
@@ -377,171 +338,6 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-
-      {/* Wallet Selection Modal */}
-      {showWalletModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop with blur effect matching navbar */}
-          <div 
-            className="absolute inset-0 bg-black/30 backdrop-blur-lg"
-            onClick={() => setShowWalletModal(false)}
-          />
-          
-          {/* Modal with theme matching */}
-          <div className="relative bg-white/90 dark:bg-gray-950/90 backdrop-blur-lg rounded-2xl shadow-2xl border border-gray-200/50 dark:border-gray-800/50 p-8 w-full max-w-lg mx-4">
-            {/* Header with gradient accent */}
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-1">
-                  Connect Wallet
-                </h3>
-                <div className="h-1 w-16 bg-gradient-to-r from-cyan-400 to-teal-400 rounded-full" />
-              </div>
-              <button
-                onClick={() => setShowWalletModal(false)}
-                className="p-3 hover:bg-gray-100/50 dark:hover:bg-gray-800/50 rounded-xl transition-all duration-200 group"
-              >
-                <XMarkIcon className="w-6 h-6 text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors" />
-              </button>
-            </div>
-
-            {/* 2x2 Grid Layout */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Phantom */}
-              <div className="relative">
-                <button
-                  onClick={() => connectWallet('Phantom')}
-                  disabled={isConnecting || !availableWallets.includes('Phantom')}
-                  className={`
-                    group relative flex flex-col items-center justify-center p-6 rounded-xl transition-all duration-200 w-full
-                    ${availableWallets.includes('Phantom')
-                      ? 'bg-cyan-100/50 dark:bg-cyan-900/20 border border-cyan-200/70 dark:border-cyan-700/50 hover:bg-cyan-200/70 dark:hover:bg-cyan-900/30 hover:border-cyan-300 dark:hover:border-cyan-600 hover:shadow-lg hover:shadow-cyan-500/20 hover:scale-105'
-                      : 'bg-gray-100/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 opacity-50 cursor-not-allowed'
-                    }
-                  `}
-                >
-                  <img 
-                    src="/phantom.svg" 
-                    alt="Phantom" 
-                    className="w-16 h-16 object-contain rounded-full mb-3 group-hover:scale-110 transition-transform duration-200"
-                  />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Phantom</span>
-                  {!availableWallets.includes('Phantom') && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Not installed</span>
-                  )}
-                  {isConnecting && (
-                    <div className="absolute top-2 right-2 w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-                  )}
-                </button>
-                {!availableWallets.includes('Phantom') && (
-                  <a 
-                    href="https://phantom.app/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="absolute top-2 left-2 text-cyan-500 hover:text-cyan-600 text-xs font-medium"
-                  >
-                    Install
-                  </a>
-                )}
-              </div>
-
-              {/* Solflare */}
-              <div className="relative">
-                <button
-                  onClick={() => connectWallet('Solflare')}
-                  disabled={isConnecting || !availableWallets.includes('Solflare')}
-                  className={`
-                    group relative flex flex-col items-center justify-center p-6 rounded-xl transition-all duration-200 w-full
-                    ${availableWallets.includes('Solflare')
-                      ? 'bg-cyan-100/50 dark:bg-cyan-900/20 border border-cyan-200/70 dark:border-cyan-700/50 hover:bg-cyan-200/70 dark:hover:bg-cyan-900/30 hover:border-cyan-300 dark:hover:border-cyan-600 hover:shadow-lg hover:shadow-cyan-500/20 hover:scale-105'
-                      : 'bg-gray-100/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 opacity-50 cursor-not-allowed'
-                    }
-                  `}
-                >
-                  <img 
-                    src="/solflare.png" 
-                    alt="Solflare" 
-                    className="w-16 h-16 object-contain rounded-full mb-3 group-hover:scale-110 transition-transform duration-200"
-                  />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Solflare</span>
-                  {!availableWallets.includes('Solflare') && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Not installed</span>
-                  )}
-                  {isConnecting && (
-                    <div className="absolute top-2 right-2 w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-                  )}
-                </button>
-                {!availableWallets.includes('Solflare') && (
-                  <a 
-                    href="https://solflare.com/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="absolute top-2 left-2 text-cyan-500 hover:text-cyan-600 text-xs font-medium"
-                  >
-                    Install
-                  </a>
-                )}
-              </div>
-
-              {/* Backpack */}
-              <div className="relative">
-                <button
-                  onClick={() => connectWallet('Backpack')}
-                  disabled={isConnecting || !availableWallets.includes('Backpack')}
-                  className={`
-                    group relative flex flex-col items-center justify-center p-6 rounded-xl transition-all duration-200 w-full
-                    ${availableWallets.includes('Backpack')
-                      ? 'bg-cyan-100/50 dark:bg-cyan-900/20 border border-cyan-200/70 dark:border-cyan-700/50 hover:bg-cyan-200/70 dark:hover:bg-cyan-900/30 hover:border-cyan-300 dark:hover:border-cyan-600 hover:shadow-lg hover:shadow-cyan-500/20 hover:scale-105'
-                      : 'bg-gray-100/50 dark:bg-gray-800/50 border border-gray-200/50 dark:border-gray-700/50 opacity-50 cursor-not-allowed'
-                    }
-                  `}
-                >
-                  <img 
-                    src="/backpack.png" 
-                    alt="Backpack" 
-                    className="w-16 h-16 object-contain rounded-full mb-3 group-hover:scale-110 transition-transform duration-200"
-                  />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Backpack</span>
-                  {!availableWallets.includes('Backpack') && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Not installed</span>
-                  )}
-                  {isConnecting && (
-                    <div className="absolute top-2 right-2 w-4 h-4 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
-                  )}
-                </button>
-                {!availableWallets.includes('Backpack') && (
-                  <a 
-                    href="https://www.backpack.app/" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="absolute top-2 left-2 text-cyan-500 hover:text-cyan-600 text-xs font-medium"
-                  >
-                    Install
-                  </a>
-                )}
-              </div>
-
-              {/* Empty slot for future wallet */}
-              <div className="flex flex-col items-center justify-center p-6 rounded-xl border-2 border-dashed border-gray-300/50 dark:border-gray-600/50">
-                <div className="w-16 h-16 bg-gray-200/50 dark:bg-gray-700/50 rounded-2xl flex items-center justify-center mb-3">
-                  <span className="text-gray-400 dark:text-gray-500 text-2xl">+</span>
-                </div>
-                <span className="text-xs text-gray-400 dark:text-gray-500">More coming</span>
-              </div>
-            </div>
-
-            {/* Footer with gradient accent */}
-            <div className="mt-8 pt-6 border-t border-gray-200/50 dark:border-gray-700/50">
-              <p className="text-center text-sm text-gray-600 dark:text-gray-400">
-                Don't have a wallet? 
-                <span className="ml-1 bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent font-medium">
-                  Install from official websites
-                </span>
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
     </nav>
   );
 }

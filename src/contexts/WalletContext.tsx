@@ -1,15 +1,15 @@
 "use client"
 import { createContext, useContext, ReactNode } from 'react';
-import { useWalletConnection } from '@/hooks/useWalletConnection';
-import type { WalletContextType } from '@/types/wallet';
+import { useWallet as useSolanaWallet } from '@solana/wallet-adapter-react';
 
-const WalletContext = createContext<WalletContextType | undefined>(undefined);
+// Simple wallet context that directly uses Solana wallet adapter
+const WalletContext = createContext<ReturnType<typeof useSolanaWallet> | undefined>(undefined);
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const walletState = useWalletConnection();
+  const solanaWallet = useSolanaWallet();
 
   return (
-    <WalletContext.Provider value={walletState}>
+    <WalletContext.Provider value={solanaWallet}>
       {children}
     </WalletContext.Provider>
   );

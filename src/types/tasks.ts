@@ -65,7 +65,7 @@ export interface TaskResponse {
 }
 
 // Smart Contract Program Constants
-export const PROGRAM_ID = 'Afja4Q8urL5j8Hn3PpCkgP2Tgpe8xtp98khPmAVZF5Vk';
+export const PROGRAM_ID = '5rA6ZXgbDsW96eqXneKUBCP69bBn2e4yERmMKuTGkjAQ';
 export const PROGRAM_ID_PUBKEY = new PublicKey(PROGRAM_ID);
 
 // PDA Seeds

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { GoogleAnalytics } from "@/components/GoogleAnalytics";
-import { WalletProvider } from "@/contexts/WalletContext";
+import { AppProviders } from "@/components/AppProviders";
 import TaskProviderWrapper from "@/components/TaskProviderWrapper";
 
 export const metadata: Metadata = {
@@ -18,12 +18,23 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <GoogleAnalytics />
-        <WalletProvider>
+        <AppProviders>
           <TaskProviderWrapper>
             {children}
           </TaskProviderWrapper>
-        </WalletProvider>
+        </AppProviders>
       </body>
     </html>
   );
+}
+
+// Patch BigInt so we can log it using JSON.stringify without any errors
+declare global {
+  interface BigInt {
+    toJSON(): string
+  }
+}
+
+BigInt.prototype.toJSON = function () {
+  return this.toString()
 }

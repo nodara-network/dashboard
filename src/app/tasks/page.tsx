@@ -5,35 +5,71 @@ import PageLayout from "@/components/layout/PageLayout";
 import PageHeader from "@/components/layout/PageHeader";
 import MetricCard from "@/components/ui/MetricCard";
 import ChartCard from "@/components/ui/ChartCard";
-import { useTaskContext } from '@/contexts/TaskContext';
-import { CreateTaskData } from '@/types/tasks';
-import TaskTest from '@/components/tasks/TaskTest';
+import { useSmartContractsProgram, useSmartContractsProgramAccount } from '@/hooks/useSmartContracts';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletButton } from '@/components/solana/SolanaProvider';
+import { toast } from 'sonner';
 
 export default function TasksPage() {
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'create' | 'test'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'create'>('all');
+  const { connected, publicKey } = useWallet();
+  const { getAllTasks } = useSmartContractsProgram();
   const { 
-    tasks, 
-    loading, 
-    error, 
     createTask,
-    getTasksByStatus 
-  } = useTaskContext();
+    depositFunds,
+    markTaskComplete,
+    submitResponse 
+  } = useSmartContractsProgramAccount();
 
+  const { data: tasks = [], isLoading: loading } = getAllTasks;
+
+  // Mock data for now since we don't have task filtering implemented yet
+  const activeTasks = tasks.filter((task: any) => !task.account.isComplete);
+  const completedTasks = tasks.filter((task: any) => task.account.isComplete);
+  
   const filteredTasks = activeTab === 'all' 
     ? tasks 
-    : getTasksByStatus(activeTab as 'active' | 'completed' | 'cancelled');
+    : activeTab === 'active' 
+    ? activeTasks
+    : completedTasks;
 
   const totalTasks = tasks.length;
-  const activeTasks = getTasksByStatus('active').length;
-  const completedTasks = getTasksByStatus('completed').length;
-  const totalRewards = tasks.reduce((sum, task) => sum + task.reward, 0);
+  const activeTasksCount = activeTasks.length;
+  const completedTasksCount = completedTasks.length;
+  
+  // Calculate total rewards (convert from lamports to SOL)
+  const totalRewards = tasks.reduce((sum: number, task: any) => {
+    return sum + (task.account.rewardPerResponse || 0);
+  }, 0) / 1e9; // Convert lamports to SOL
 
   const stats = [
     { label: "Total Tasks", value: totalTasks.toString() },
-    { label: "Active Tasks", value: activeTasks.toString() },
-    { label: "Completed", value: completedTasks.toString() },
-    { label: "Total SOL", value: totalRewards.toFixed(2) },
+    { label: "Active Tasks", value: activeTasksCount.toString() },
+    { label: "Completed", value: completedTasksCount.toString() },
+    { label: "Total SOL", value: totalRewards.toFixed(4) },
   ];
+
+  if (!connected) {
+    return (
+      <PageLayout>
+        <PageHeader
+          title="Task Management"
+          description="Create, manage, and monitor your distributed compute tasks"
+        />
+        
+        <div className="flex flex-col items-center justify-center py-16">
+          <div className="text-6xl mb-6">🔌</div>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            Connect Your Wallet
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-8 text-center max-w-md">
+            Please connect your Solana wallet to create and manage tasks on the blockchain.
+          </p>
+          <WalletButton />
+        </div>
+      </PageLayout>
+    );
+  }
 
   return (
     <PageLayout>
@@ -43,7 +79,12 @@ export default function TasksPage() {
       />
 
       {/* Action Button */}
-      <div className="mb-8 flex justify-end">
+      <div className="mb-8 flex justify-between items-center">
+        <div className="flex items-center space-x-4">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Connected: <span className="font-mono text-xs">{publicKey?.toString().slice(0, 8)}...{publicKey?.toString().slice(-8)}</span>
+          </div>
+        </div>
         <button
           onClick={() => setActiveTab('create')}
           className="px-6 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg font-medium hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-all duration-200"
@@ -64,21 +105,13 @@ export default function TasksPage() {
         ))}
       </div>
 
-      {/* Error Display */}
-      {error && (
-        <div className="mb-6 p-4 bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-700 rounded-lg">
-          <p className="text-red-800 dark:text-red-400">{error}</p>
-        </div>
-      )}
-
       {/* Tabs */}
       <div className="flex space-x-1 mb-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg p-1 border border-gray-200 dark:border-gray-700">
         {[
           { id: 'all', label: 'All Tasks' },
           { id: 'active', label: 'Active' },
           { id: 'completed', label: 'Completed' },
-          { id: 'create', label: 'Create Task' },
-          { id: 'test', label: 'Test Integration' }
+          { id: 'create', label: 'Create Task' }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -97,8 +130,6 @@ export default function TasksPage() {
       {/* Content */}
       {activeTab === 'create' ? (
         <CreateTaskForm onCancel={() => setActiveTab('all')} />
-      ) : activeTab === 'test' ? (
-        <TaskTest />
       ) : (
         <TaskList tasks={filteredTasks} loading={loading} />
       )}
@@ -107,10 +138,8 @@ export default function TasksPage() {
 }
 
 function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
-  const { createTask, loading } = useTaskContext();
+  const { createTask } = useSmartContractsProgramAccount();
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
     reward: '',
     maxResponses: '',
     deadline: '',
@@ -121,74 +150,52 @@ function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
     e.preventDefault();
     
     try {
-      const taskData: CreateTaskData = {
-        taskId: Date.now(), // Generate unique task ID
-        rewardPerResponse: parseFloat(formData.reward),
-        maxResponses: parseInt(formData.maxResponses),
-        deadline: new Date(formData.deadline),
-        cid: formData.cid
-      };
+      const taskId = Math.floor(Math.random() * 1000000); // Generate random task ID
+      const rewardInLamports = Math.floor(parseFloat(formData.reward) * 1e9); // Convert SOL to lamports
+      const deadline = Math.floor(new Date(formData.deadline).getTime() / 1000); // Convert to Unix timestamp
 
-      const signature = await createTask(taskData);
-      console.log('Task created successfully:', signature);
+      await createTask.mutateAsync({
+        taskId,
+        rewardPerResponse: rewardInLamports,
+        maxResponses: parseInt(formData.maxResponses),
+        deadline,
+        cid: formData.cid
+      });
+
+      toast.success('Task created successfully!');
       onCancel();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to create task:', error);
+      toast.error(`Failed to create task: ${error.message || 'Unknown error'}`);
     }
   };
 
   return (
     <ChartCard
       title="Create New Task"
-      description="Set up a new distributed compute task"
+      description="Set up a new distributed compute task on the blockchain"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Task Title
-            </label>
-            <input
-              type="text"
-              value={formData.title}
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              placeholder="Enter task title"
-              required
-            />
-          </div>
-          
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Reward per Response (SOL)
             </label>
             <input
               type="number"
-              step="0.01"
+              step="0.001"
               value={formData.reward}
               onChange={(e) => setFormData({...formData, reward: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              placeholder="0.5"
+              placeholder="0.01"
               required
+              min="0.001"
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Amount in SOL to pay per valid response
+            </p>
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-            Description
-          </label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({...formData, description: e.target.value})}
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-            placeholder="Describe what this task requires..."
-            required
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Max Responses
@@ -200,9 +207,16 @@ function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               placeholder="5"
               required
+              min="1"
+              max="1000"
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Maximum number of responses to accept
+            </p>
           </div>
-          
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Deadline
@@ -213,7 +227,11 @@ function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
               onChange={(e) => setFormData({...formData, deadline: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
               required
+              min={new Date().toISOString().slice(0, 16)}
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              When the task should be completed
+            </p>
           </div>
           
           <div>
@@ -225,25 +243,46 @@ function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
               value={formData.cid}
               onChange={(e) => setFormData({...formData, cid: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              placeholder="Qm..."
+              placeholder="QmExample..."
               required
             />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              IPFS hash containing task details
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                Important
+              </h3>
+              <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-300">
+                <p>Make sure you have enough SOL to fund the task rewards. Total cost will be: <strong>{formData.reward && formData.maxResponses ? (parseFloat(formData.reward || '0') * parseInt(formData.maxResponses || '0')).toFixed(3) : '0'} SOL</strong></p>
+              </div>
+            </div>
           </div>
         </div>
 
         <div className="flex space-x-4">
           <button
             type="submit"
-            disabled={loading}
-            className="px-6 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg font-medium hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-all duration-200 disabled:opacity-50"
+            disabled={createTask.isPending}
+            className="px-6 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg font-medium hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {loading ? 'Creating...' : 'Create Task'}
+            {createTask.isPending ? 'Creating...' : 'Create Task'}
           </button>
           <button
             type="button"
             onClick={onCancel}
-            disabled={loading}
-            className="px-6 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 disabled:opacity-50"
+            disabled={createTask.isPending}
+            className="px-6 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -257,7 +296,7 @@ function TaskList({ tasks, loading }: { tasks: any[], loading: boolean }) {
   return (
     <ChartCard
       title="Task List"
-      description="Manage your distributed compute tasks"
+      description="Manage your distributed compute tasks on the blockchain"
     >
       <div className="space-y-4">
         {loading ? (
@@ -265,7 +304,7 @@ function TaskList({ tasks, loading }: { tasks: any[], loading: boolean }) {
             <div className="text-gray-500 dark:text-gray-400 mb-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600 mx-auto"></div>
             </div>
-            <p className="text-gray-600 dark:text-gray-400">Loading tasks...</p>
+            <p className="text-gray-600 dark:text-gray-400">Loading tasks from blockchain...</p>
           </div>
         ) : tasks.length === 0 ? (
           <div className="text-center py-12">
@@ -278,8 +317,8 @@ function TaskList({ tasks, loading }: { tasks: any[], loading: boolean }) {
             <p className="text-gray-600 dark:text-gray-400">Create your first task to get started</p>
           </div>
         ) : (
-          tasks.map((task) => (
-            <TaskCard key={task.id} task={task} />
+          tasks.map((task, index) => (
+            <TaskCard key={task.publicKey?.toString() || index} task={task} />
           ))
         )}
       </div>
@@ -288,9 +327,34 @@ function TaskList({ tasks, loading }: { tasks: any[], loading: boolean }) {
 }
 
 function TaskCard({ task }: { task: any }) {
-  const timeLeft = task.deadline > new Date() 
-    ? Math.ceil((task.deadline.getTime() - Date.now()) / (1000 * 60 * 60))
-    : 0;
+  const { markTaskComplete } = useSmartContractsProgramAccount();
+  const { publicKey } = useWallet();
+  
+  // Extract task data from the blockchain response
+  const taskData = task.account;
+  const taskPubkey = task.publicKey;
+  
+  const deadline = new Date(taskData.deadline * 1000); // Convert from Unix timestamp
+  const isExpired = deadline < new Date();
+  const timeLeft = isExpired ? 0 : Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60));
+  
+  const rewardInSol = taskData.rewardPerResponse / 1e9; // Convert from lamports to SOL
+  const isCreator = publicKey && taskData.creator.toString() === publicKey.toString();
+  
+  const handleMarkComplete = async () => {
+    if (!isCreator) return;
+    
+    try {
+      await markTaskComplete.mutateAsync({
+        taskId: taskData.taskId,
+        creator: taskData.creator
+      });
+      toast.success('Task marked as complete!');
+    } catch (error: any) {
+      console.error('Failed to mark task complete:', error);
+      toast.error(`Failed to mark task complete: ${error.message || 'Unknown error'}`);
+    }
+  };
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
@@ -298,27 +362,35 @@ function TaskCard({ task }: { task: any }) {
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-2">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              {task.title}
+              Task #{taskData.taskId.toString()}
             </h3>
             <span
               className={`px-3 py-1 rounded-full text-xs font-medium ${
-                task.status === 'active'
-                  ? 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400'
-                  : task.status === 'completed'
+                taskData.isComplete
                   ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
-                  : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                  : isExpired
+                  ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                  : 'bg-cyan-100 text-cyan-800 dark:bg-cyan-900/30 dark:text-cyan-400'
               }`}
             >
-              {task.status}
+              {taskData.isComplete ? 'Completed' : isExpired ? 'Expired' : 'Active'}
             </span>
+            {isCreator && (
+              <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                Your Task
+              </span>
+            )}
           </div>
-          <p className="text-gray-600 dark:text-gray-400 mb-3">
-            {task.description}
-          </p>
+          <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            <div className="flex items-center space-x-4">
+              <span>Creator: <span className="font-mono text-xs">{taskData.creator.toString().slice(0, 8)}...{taskData.creator.toString().slice(-8)}</span></span>
+              <span>IPFS: <span className="font-mono text-xs">{taskData.cid.slice(0, 12)}...</span></span>
+            </div>
+          </div>
         </div>
         <div className="text-right">
           <div className="text-2xl font-bold text-gray-900 dark:text-white">
-            {task.reward} SOL
+            {rewardInSol.toFixed(4)} SOL
           </div>
           <div className="text-sm text-gray-600 dark:text-gray-400">
             per response
@@ -330,7 +402,7 @@ function TaskCard({ task }: { task: any }) {
         <div>
           <div className="text-gray-600 dark:text-gray-400">Responses</div>
           <div className="font-semibold text-gray-900 dark:text-white">
-            {task.responses}/{task.maxResponses}
+            {taskData.responsesReceived}/{taskData.maxResponses}
           </div>
         </div>
         <div>
@@ -340,33 +412,50 @@ function TaskCard({ task }: { task: any }) {
           </div>
         </div>
         <div>
-          <div className="text-gray-600 dark:text-gray-400">Creator</div>
-          <div className="font-semibold text-gray-900 dark:text-white">
-            {task.creator}
+          <div className="text-gray-600 dark:text-gray-400">Deadline</div>
+          <div className="font-semibold text-gray-900 dark:text-white text-xs">
+            {deadline.toLocaleDateString()}
           </div>
         </div>
         <div>
-          <div className="text-gray-600 dark:text-gray-400">CID</div>
-          <div className="font-mono text-xs text-gray-900 dark:text-white truncate">
-            {task.cid}
+          <div className="text-gray-600 dark:text-gray-400">Address</div>
+          <div className="font-mono text-xs text-gray-900 dark:text-white">
+            {taskPubkey.toString().slice(0, 8)}...
           </div>
         </div>
       </div>
 
+      <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 mb-4">
+        <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Task Content (IPFS)</div>
+        <div className="font-mono text-sm text-gray-900 dark:text-white break-all">
+          {taskData.cid}
+        </div>
+      </div>
+
       <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-        <button className="px-4 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg text-sm font-medium hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-all duration-200">
-          View Responses
+        <button 
+          onClick={() => window.open(`https://ipfs.io/ipfs/${taskData.cid}`, '_blank')}
+          className="px-4 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg text-sm font-medium hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-all duration-200"
+        >
+          View Content
         </button>
-        {task.status === 'active' && (
-          <>
-            <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200">
-              Cancel Task
-            </button>
-            <button className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200">
-              Mark Complete
-            </button>
-          </>
+        
+        {isCreator && !taskData.isComplete && (
+          <button 
+            onClick={handleMarkComplete}
+            disabled={markTaskComplete.isPending}
+            className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-sm font-medium hover:bg-green-200 dark:hover:bg-green-900/50 transition-all duration-200 disabled:opacity-50"
+          >
+            {markTaskComplete.isPending ? 'Marking...' : 'Mark Complete'}
+          </button>
         )}
+        
+        <button 
+          onClick={() => window.open(`https://explorer.solana.com/address/${taskPubkey.toString()}?cluster=custom&customUrl=http://localhost:8899`, '_blank')}
+          className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200"
+        >
+          View on Explorer
+        </button>
       </div>
     </div>
   );
