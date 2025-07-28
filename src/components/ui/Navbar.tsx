@@ -17,7 +17,8 @@ import {
   WalletIcon,
   CogIcon,
   ArrowRightOnRectangleIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  ClipboardDocumentListIcon
 } from '@heroicons/react/24/outline';
 
 
@@ -46,6 +47,12 @@ const navigation: NavItem[] = [
     href: '/analytics',
     description: 'Network statistics and performance metrics',
     icon: ChartBarIcon,
+  },
+  {
+    name: 'Tasks',
+    href: '/tasks',
+    description: 'Create and manage distributed compute tasks',
+    icon: ClipboardDocumentListIcon,
   },
   {
     name: 'Node Dashboard',

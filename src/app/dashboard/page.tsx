@@ -3,6 +3,7 @@ import ServicesOverview from "@/components/dashboard/ServicesOverview";
 import DevicesOverview from "@/components/dashboard/DevicesOverview";
 import AnalyticsOverview from "@/components/dashboard/AnalyticsOverview";
 import NodeDashboardOverview from "@/components/dashboard/NodeDashboardOverview";
+import TasksOverview from "@/components/dashboard/TasksOverview";
 
 export default function Dashboard() {
   return (
@@ -16,7 +17,7 @@ export default function Dashboard() {
               Dashboard Overview
             </h1>
             <p className="text-lg text-gray-600 dark:text-gray-300">
-              Welcome to the Nodara Network. Monitor your services, devices, analytics, and node performance.
+              Welcome to the Nodara Network. Monitor your services, devices, analytics, node performance, and task management.
             </p>
           </div>
 
@@ -33,6 +34,9 @@ export default function Dashboard() {
             
             {/* Node Dashboard Overview */}
             <NodeDashboardOverview />
+            
+            {/* Tasks Overview */}
+            <TasksOverview />
           </div>
 
           {/* Quick Stats */}
@@ -60,13 +64,14 @@ export default function Dashboard() {
               Getting Started with Nodara Network
             </h2>
             <p className="text-gray-600 dark:text-gray-300 mb-4">
-              Explore the different sections to discover compute services, monitor device networks, analyze performance metrics, and manage your own compute node.
+              Explore the different sections to discover compute services, monitor device networks, analyze performance metrics, manage your own compute node, and create distributed tasks.
             </p>
             <div className="flex flex-wrap gap-2">
               <span className="bg-cyan-200 dark:bg-cyan-800 text-cyan-800 dark:text-cyan-200 text-xs px-3 py-1 rounded-full">Serverless Functions</span>
               <span className="bg-cyan-200 dark:bg-cyan-800 text-cyan-800 dark:text-cyan-200 text-xs px-3 py-1 rounded-full">Smartphone Compute</span>
               <span className="bg-cyan-200 dark:bg-cyan-800 text-cyan-800 dark:text-cyan-200 text-xs px-3 py-1 rounded-full">SOL Payments</span>
               <span className="bg-cyan-200 dark:bg-cyan-800 text-cyan-800 dark:text-cyan-200 text-xs px-3 py-1 rounded-full">Global Network</span>
+              <span className="bg-cyan-200 dark:bg-cyan-800 text-cyan-800 dark:text-cyan-200 text-xs px-3 py-1 rounded-full">Task Management</span>
             </div>
           </div>
         </div>
