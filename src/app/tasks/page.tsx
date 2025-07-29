@@ -8,12 +8,15 @@ import ChartCard from "@/components/ui/ChartCard";
 import { useSmartContractsProgram, useSmartContractsProgramAccount } from '@/hooks/useSmartContracts';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletButton } from '@/components/solana/SolanaProvider';
+import { AdminPanel } from '@/components/tasks/AdminPanel';
+import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { toast } from 'sonner';
 
 export default function TasksPage() {
-  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'create'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'create' | 'admin'>('all');
   const { connected, publicKey } = useWallet();
   const { getAllTasks } = useSmartContractsProgram();
+  const { isAdmin, isLoading: adminLoading } = useAdminAccess();
   const { 
     createTask,
     depositFunds,
@@ -111,7 +114,8 @@ export default function TasksPage() {
           { id: 'all', label: 'All Tasks' },
           { id: 'active', label: 'Active' },
           { id: 'completed', label: 'Completed' },
-          { id: 'create', label: 'Create Task' }
+          { id: 'create', label: 'Create Task' },
+          { id: 'admin', label: 'Admin' }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -130,6 +134,8 @@ export default function TasksPage() {
       {/* Content */}
       {activeTab === 'create' ? (
         <CreateTaskForm onCancel={() => setActiveTab('all')} />
+      ) : activeTab === 'admin' ? (
+        <AdminPanel />
       ) : (
         <TaskList tasks={filteredTasks} loading={loading} />
       )}

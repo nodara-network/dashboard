@@ -63,6 +63,10 @@ export function getProgram(provider: AnchorProvider): Program<SmartContracts> {
 export const getProgramId = () => programId;
 ```
 
+**Updated Program ID:**
+- Changed from: `5rA6ZXgbDsW96eqXneKUBCP69bBn2e4yERmMKuTGkjAQ`
+- Changed to: `5rA6ZXgbDsW96eqXneKUBCP69bBn2e4yERmMKuTGkjAQ` (using deployed program ID)
+
 ### 3. Cluster Management
 
 **Network Configuration (`src/components/cluster/cluster-data-access.tsx`):**
@@ -109,6 +113,9 @@ export function useAnchorProvider() {
 - `submitResponse()` - Submit a response to a task
 - `depositFunds()` - Deposit funds to task reward vault
 - `markTaskComplete()` - Mark task as completed
+- `initAdmin()` - Initialize admin account
+- `delegateTaskAccount()` - Delegate task account to MagicBlock
+- `undelegateTaskAccount()` - Undelegate task account from MagicBlock
 
 **Example Task Creation:**
 ```tsx

@@ -69,13 +69,27 @@ export function useSmartContractsProgram() {
     },
   });
 
+  const getAllAdminAccounts = useQuery({
+    queryKey: ['all-admin-accounts', { cluster }],
+    queryFn: async () => {
+      try {
+        const admins = await program.account.adminAccount.all();
+        return admins;
+      } catch (error) {
+        console.error('Error fetching admin accounts:', error);
+        return [];
+      }
+    },
+  });
+
   return {
     program,
     accounts,
     getProgramAccount,
     getAllTasks,
     getAllResponses,
-    getAllRewardVaults
+    getAllRewardVaults,
+    getAllAdminAccounts
   }
 }
 
@@ -299,10 +313,134 @@ export function useSmartContractsProgramAccount() {
     },
   });
 
+  const initAdmin = useMutation({
+    mutationKey: ['init-admin', { cluster }],
+    mutationFn: async () => {
+      if (!wallet?.publicKey) {
+        throw new Error("Wallet not connected");
+      }
+
+      // Derive the admin account PDA
+      const [adminAccountPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("admin")],
+        program.programId
+      );
+
+      const tx = await program.methods
+        .initAdmin()
+        .accountsPartial({
+          admin: wallet.publicKey,
+          adminAccount: adminAccountPda,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      return tx;
+    },
+    onSuccess: () => {
+      toast.success('Admin account initialized!');
+    },
+    onError: (error) => {
+      console.error('Init admin error:', error);
+      toast.error('Failed to initialize admin account');
+    },
+  });
+
+  const delegateTaskAccount = useMutation({
+    mutationKey: ['delegate-task-account', { cluster }],
+    mutationFn: async ({
+      taskId,
+      creator
+    }: {
+      taskId: number;
+      creator: PublicKey;
+    }) => {
+      if (!wallet?.publicKey) {
+        throw new Error("Wallet not connected");
+      }
+
+      const taskIdBN = new BN(taskId);
+
+      // Derive the task account PDA
+      const [taskAccountPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("task"),
+          creator.toBuffer(),
+          taskIdBN.toArrayLike(Buffer, "le", 8)
+        ],
+        program.programId
+      );
+
+      const tx = await program.methods
+        .delegateTaskAccount(taskIdBN)
+        .accountsPartial({
+          creator: wallet.publicKey,
+          taskAccount: taskAccountPda,
+        })
+        .rpc();
+
+      return tx;
+    },
+    onSuccess: () => {
+      toast.success('Task account delegated successfully!');
+    },
+    onError: (error) => {
+      console.error('Delegate task account error:', error);
+      toast.error('Failed to delegate task account');
+    },
+  });
+
+  const undelegateTaskAccount = useMutation({
+    mutationKey: ['undelegate-task-account', { cluster }],
+    mutationFn: async ({
+      taskId,
+      creator
+    }: {
+      taskId: number;
+      creator: PublicKey;
+    }) => {
+      if (!wallet?.publicKey) {
+        throw new Error("Wallet not connected");
+      }
+
+      const taskIdBN = new BN(taskId);
+
+      // Derive the task account PDA
+      const [taskAccountPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from("task"),
+          creator.toBuffer(),
+          taskIdBN.toArrayLike(Buffer, "le", 8)
+        ],
+        program.programId
+      );
+
+      const tx = await program.methods
+        .undelegateTaskAccount()
+        .accountsPartial({
+          creator: wallet.publicKey,
+          taskAccount: taskAccountPda,
+        })
+        .rpc();
+
+      return tx;
+    },
+    onSuccess: () => {
+      toast.success('Task account undelegated successfully!');
+    },
+    onError: (error) => {
+      console.error('Undelegate task account error:', error);
+      toast.error('Failed to undelegate task account');
+    },
+  });
+
   return {
     createTask,
     submitResponse,
     depositFunds,
-    markTaskComplete
+    markTaskComplete,
+    initAdmin,
+    delegateTaskAccount,
+    undelegateTaskAccount
   };
 }

@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/smart_contracts.json`.
  */
 export type SmartContracts = {
-  "address": "5rA6ZXgbDsW96eqXneKUBCP69bBn2e4yERmMKuTGkjAQ",
+  "address": "Afja4Q8urL5j8Hn3PpCkgP2Tgpe8xtp98khPmAVZF5Vk",
   "metadata": {
     "name": "smartContracts",
     "version": "0.1.0",
@@ -159,6 +159,178 @@ export type SmartContracts = {
       ]
     },
     {
+      "name": "delegateTaskAccount",
+      "discriminator": [
+        71,
+        106,
+        16,
+        90,
+        137,
+        161,
+        102,
+        241
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "signer": true
+        },
+        {
+          "name": "bufferTaskAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  98,
+                  117,
+                  102,
+                  102,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "taskAccount"
+              }
+            ],
+            "program": {
+              "kind": "const",
+              "value": [
+                143,
+                165,
+                99,
+                25,
+                117,
+                108,
+                133,
+                228,
+                182,
+                107,
+                2,
+                86,
+                120,
+                97,
+                20,
+                28,
+                179,
+                102,
+                90,
+                245,
+                48,
+                126,
+                88,
+                177,
+                80,
+                99,
+                207,
+                145,
+                11,
+                27,
+                185,
+                3
+              ]
+            }
+          }
+        },
+        {
+          "name": "delegationRecordTaskAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "taskAccount"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegationProgram"
+            }
+          }
+        },
+        {
+          "name": "delegationMetadataTaskAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  108,
+                  101,
+                  103,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  100,
+                  97,
+                  116,
+                  97
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "taskAccount"
+              }
+            ],
+            "program": {
+              "kind": "account",
+              "path": "delegationProgram"
+            }
+          }
+        },
+        {
+          "name": "taskAccount",
+          "writable": true
+        },
+        {
+          "name": "ownerProgram",
+          "address": "Afja4Q8urL5j8Hn3PpCkgP2Tgpe8xtp98khPmAVZF5Vk"
+        },
+        {
+          "name": "delegationProgram",
+          "address": "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh"
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "taskId",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "depositFunds",
       "discriminator": [
         202,
@@ -291,6 +463,49 @@ export type SmartContracts = {
       ]
     },
     {
+      "name": "initAdmin",
+      "discriminator": [
+        97,
+        65,
+        97,
+        27,
+        200,
+        206,
+        72,
+        219
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "adminAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  109,
+                  105,
+                  110
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "markTaskComplete",
       "discriminator": [
         129,
@@ -332,7 +547,10 @@ export type SmartContracts = {
         },
         {
           "name": "creator",
-          "signer": true
+          "signer": true,
+          "relations": [
+            "taskAccount"
+          ]
         }
       ],
       "args": []
@@ -389,7 +607,29 @@ export type SmartContracts = {
       "accounts": [
         {
           "name": "taskAccount",
-          "writable": true
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  97,
+                  115,
+                  107
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "creator"
+              },
+              {
+                "kind": "account",
+                "path": "task_account.task_id",
+                "account": "taskAccount"
+              }
+            ]
+          }
         },
         {
           "name": "rewardVault",
@@ -511,6 +751,62 @@ export type SmartContracts = {
       ]
     },
     {
+      "name": "undelegateTaskAccount",
+      "discriminator": [
+        201,
+        104,
+        83,
+        58,
+        81,
+        253,
+        21,
+        82
+      ],
+      "accounts": [
+        {
+          "name": "creator",
+          "signer": true
+        },
+        {
+          "name": "taskAccount",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  97,
+                  115,
+                  107
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "task_account.creator",
+                "account": "taskAccount"
+              },
+              {
+                "kind": "account",
+                "path": "task_account.task_id",
+                "account": "taskAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "magicProgram",
+          "address": "Magic11111111111111111111111111111111111111"
+        },
+        {
+          "name": "magicContext",
+          "writable": true,
+          "address": "MagicContext1111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "verifyResponse",
       "discriminator": [
         205,
@@ -536,6 +832,19 @@ export type SmartContracts = {
     }
   ],
   "accounts": [
+    {
+      "name": "adminAccount",
+      "discriminator": [
+        153,
+        119,
+        180,
+        178,
+        43,
+        66,
+        235,
+        148
+      ]
+    },
     {
       "name": "responseAccount",
       "discriminator": [
@@ -579,31 +888,42 @@ export type SmartContracts = {
   "errors": [
     {
       "code": 6000,
-      "name": "invalidTaskId",
-      "msg": "Task ID must be non-zero."
+      "name": "inputTooLarge",
+      "msg": "Input data too large."
     },
     {
       "code": 6001,
-      "name": "invalidReward",
-      "msg": "Reward per response must be greater than zero."
+      "name": "taskAlreadyComplete",
+      "msg": "Task already marked complete."
     },
     {
       "code": 6002,
-      "name": "invalidMaxResponses",
-      "msg": "Max responses must be greater than zero."
+      "name": "notEnoughResponses",
+      "msg": "Not enough valid responses yet."
     },
     {
       "code": 6003,
-      "name": "invalidDeadline",
-      "msg": "Deadline must be in the future."
-    },
-    {
-      "code": 6004,
-      "name": "invalidCid",
-      "msg": "CID cannot be empty."
+      "name": "responseAlreadyExists",
+      "msg": "Response already exists."
     }
   ],
   "types": [
+    {
+      "name": "adminAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
     {
       "name": "responseAccount",
       "type": {
