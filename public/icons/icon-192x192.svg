@@ -1,0 +1,6 @@
+
+<svg width="192" height="192" viewBox="0 0 192 192" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" fill="#000000"/>
+  <circle cx="96" cy="96" r="48" fill="#ffffff"/>
+  <text x="96" y="105.6" text-anchor="middle" fill="#000000" font-family="Arial" font-size="24" font-weight="bold">N</text>
+</svg>
