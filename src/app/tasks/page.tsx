@@ -11,6 +11,7 @@ import { WalletButton } from '@/components/solana/SolanaProvider';
 import { AdminPanel } from '@/components/tasks/AdminPanel';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { toast } from 'sonner';
+import { mockTasks, mockStats } from '@/services/mockData';
 
 export default function TasksPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'create' | 'admin'>('all');
@@ -24,9 +25,24 @@ export default function TasksPage() {
     submitResponse 
   } = useSmartContractsProgramAccount();
 
-  const { data: tasks = [], isLoading: loading } = getAllTasks;
+  // Mock loading state for pitch deck
+  const loading = false;
 
-  // Mock data for now since we don't have task filtering implemented yet
+  // Use mock data for pitch deck
+  const tasks = mockTasks.map(task => ({
+    publicKey: { toString: () => `mock-${task.taskId}` },
+    account: {
+      taskId: task.taskId,
+      creator: { toString: () => task.creator },
+      rewardPerResponse: { toNumber: () => task.rewardPerResponse * 1e9 }, // Convert to lamports
+      maxResponses: task.maxResponses,
+      responsesReceived: task.responsesReceived,
+      deadline: task.deadline,
+      cid: task.cid,
+      isComplete: task.isComplete
+    }
+  }));
+
   const activeTasks = tasks.filter((task: any) => !task.account.isComplete);
   const completedTasks = tasks.filter((task: any) => task.account.isComplete);
   
@@ -36,20 +52,13 @@ export default function TasksPage() {
     ? activeTasks
     : completedTasks;
 
-  const totalTasks = tasks.length;
-  const activeTasksCount = activeTasks.length;
-  const completedTasksCount = completedTasks.length;
-  
-  // Calculate total rewards (convert from lamports to SOL)
-  const totalRewards = tasks.reduce((sum: number, task: any) => {
-    return sum + (task.account.rewardPerResponse || 0);
-  }, 0) / 1e9; // Convert lamports to SOL
-
   const stats = [
-    { label: "Total Tasks", value: totalTasks.toString() },
-    { label: "Active Tasks", value: activeTasksCount.toString() },
-    { label: "Completed", value: completedTasksCount.toString() },
-    { label: "Total SOL", value: totalRewards.toFixed(4) },
+    { label: "Total Tasks", value: mockStats.totalTasks.toString() },
+    { label: "Active Tasks", value: mockStats.activeTasks.toString() },
+    { label: "Completed", value: mockStats.completedTasks.toString() },
+    { label: "Total SOL", value: mockStats.totalRewards.toFixed(4) },
+    { label: "Avg Reward", value: mockStats.averageReward.toFixed(3) + " SOL" },
+    { label: "Total Responses", value: mockStats.totalResponses.toString() },
   ];
 
   if (!connected) {
@@ -97,7 +106,7 @@ export default function TasksPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
         {stats.map((stat, index) => (
           <MetricCard
             key={index}
@@ -109,7 +118,7 @@ export default function TasksPage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex space-x-1 mb-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg p-1 border border-gray-200 dark:border-gray-700">
+      <div className="flex flex-wrap gap-1 mb-6 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm rounded-lg p-1 border border-gray-200 dark:border-gray-700">
         {[
           { id: 'all', label: 'All Tasks' },
           { id: 'active', label: 'Active' },
@@ -120,7 +129,7 @@ export default function TasksPage() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-all duration-200 ${
+            className={`flex-1 min-w-0 py-2 px-2 sm:px-3 rounded-md text-xs sm:text-sm font-medium transition-all duration-200 ${
               activeTab === tab.id
                 ? 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 shadow-sm'
                 : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -137,7 +146,26 @@ export default function TasksPage() {
       ) : activeTab === 'admin' ? (
         <AdminPanel />
       ) : (
-        <TaskList tasks={filteredTasks} loading={loading} />
+        <>
+          {/* Category Breakdown */}
+          <div className="mb-6">
+            <ChartCard
+              title="Task Categories"
+              description="Distribution of tasks across different categories"
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+                {Object.entries(mockStats.categories).map(([category, count]) => (
+                  <div key={category} className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                    <div className="text-lg font-semibold text-gray-900 dark:text-white">{count}</div>
+                    <div className="text-xs text-gray-600 dark:text-gray-400">{category}</div>
+                  </div>
+                ))}
+              </div>
+            </ChartCard>
+          </div>
+          
+          <TaskList tasks={filteredTasks} loading={loading} />
+        </>
       )}
     </PageLayout>
   );
@@ -340,6 +368,9 @@ function TaskCard({ task }: { task: any }) {
   const taskData = task.account;
   const taskPubkey = task.publicKey;
   
+  // Find corresponding mock task for enhanced data
+  const mockTask = mockTasks.find(t => t.taskId === taskData.taskId);
+  
   const deadline = new Date(taskData.deadline * 1000); // Convert from Unix timestamp
   const isExpired = deadline < new Date();
   const timeLeft = isExpired ? 0 : Math.ceil((deadline.getTime() - Date.now()) / (1000 * 60 * 60));
@@ -364,14 +395,14 @@ function TaskCard({ task }: { task: any }) {
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between mb-4 gap-3">
         <div className="flex-1">
-          <div className="flex items-center space-x-3 mb-2">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
               Task #{taskData.taskId.toString()}
             </h3>
             <span
-              className={`px-3 py-1 rounded-full text-xs font-medium ${
+              className={`px-2 sm:px-3 py-1 rounded-full text-xs font-medium ${
                 taskData.isComplete
                   ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                   : isExpired
@@ -387,44 +418,53 @@ function TaskCard({ task }: { task: any }) {
               </span>
             )}
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400 mb-3">
-            <div className="flex items-center space-x-4">
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-3">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-4">
               <span>Creator: <span className="font-mono text-xs">{taskData.creator.toString().slice(0, 8)}...{taskData.creator.toString().slice(-8)}</span></span>
               <span>IPFS: <span className="font-mono text-xs">{taskData.cid.slice(0, 12)}...</span></span>
             </div>
+            {mockTask && (
+              <div className="mt-2">
+                <div className="text-sm font-medium text-gray-900 dark:text-white">{mockTask.title}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400">{mockTask.description}</div>
+                <div className="inline-block mt-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded text-xs">
+                  {mockTask.category}
+                </div>
+              </div>
+            )}
           </div>
         </div>
         <div className="text-right">
-          <div className="text-2xl font-bold text-gray-900 dark:text-white">
+          <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
             {rewardInSol.toFixed(4)} SOL
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
             per response
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 text-sm mb-4">
         <div>
-          <div className="text-gray-600 dark:text-gray-400">Responses</div>
-          <div className="font-semibold text-gray-900 dark:text-white">
+          <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">Responses</div>
+          <div className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
             {taskData.responsesReceived}/{taskData.maxResponses}
           </div>
         </div>
         <div>
-          <div className="text-gray-600 dark:text-gray-400">Time Left</div>
-          <div className="font-semibold text-gray-900 dark:text-white">
+          <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">Time Left</div>
+          <div className="font-semibold text-gray-900 dark:text-white text-sm sm:text-base">
             {timeLeft > 0 ? `${timeLeft}h` : 'Expired'}
           </div>
         </div>
         <div>
-          <div className="text-gray-600 dark:text-gray-400">Deadline</div>
+          <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">Deadline</div>
           <div className="font-semibold text-gray-900 dark:text-white text-xs">
             {deadline.toLocaleDateString()}
           </div>
         </div>
         <div>
-          <div className="text-gray-600 dark:text-gray-400">Address</div>
+          <div className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm">Address</div>
           <div className="font-mono text-xs text-gray-900 dark:text-white">
             {taskPubkey.toString().slice(0, 8)}...
           </div>
@@ -433,15 +473,15 @@ function TaskCard({ task }: { task: any }) {
 
       <div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-3 mb-4">
         <div className="text-xs text-gray-600 dark:text-gray-400 mb-1">Task Content (IPFS)</div>
-        <div className="font-mono text-sm text-gray-900 dark:text-white break-all">
+        <div className="font-mono text-xs sm:text-sm text-gray-900 dark:text-white break-all">
           {taskData.cid}
         </div>
       </div>
 
-      <div className="flex space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex flex-wrap gap-2 sm:gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
         <button 
           onClick={() => window.open(`https://ipfs.io/ipfs/${taskData.cid}`, '_blank')}
-          className="px-4 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg text-sm font-medium hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-all duration-200"
+          className="px-3 sm:px-4 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg text-xs sm:text-sm font-medium hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-all duration-200"
         >
           View Content
         </button>
@@ -450,7 +490,7 @@ function TaskCard({ task }: { task: any }) {
           <button 
             onClick={handleMarkComplete}
             disabled={markTaskComplete.isPending}
-            className="px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-sm font-medium hover:bg-green-200 dark:hover:bg-green-900/50 transition-all duration-200 disabled:opacity-50"
+            className="px-3 sm:px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-lg text-xs sm:text-sm font-medium hover:bg-green-200 dark:hover:bg-green-900/50 transition-all duration-200 disabled:opacity-50"
           >
             {markTaskComplete.isPending ? 'Marking...' : 'Mark Complete'}
           </button>
@@ -458,7 +498,7 @@ function TaskCard({ task }: { task: any }) {
         
         <button 
           onClick={() => window.open(`https://explorer.solana.com/address/${taskPubkey.toString()}?cluster=custom&customUrl=http://localhost:8899`, '_blank')}
-          className="px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200"
+          className="px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200"
         >
           View on Explorer
         </button>
