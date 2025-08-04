@@ -68,12 +68,10 @@ export function PWAInstallPrompt() {
     <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 border border-blue-500 rounded-xl p-4 shadow-2xl z-50 animate-pulse">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-            </div>
+                      <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src="/newlogo.jpeg" alt="Nodara" className="w-8 h-8 object-cover rounded" />
+              </div>
             <div>
               <h3 className="text-white font-bold text-lg">Install Nodara</h3>
               <p className="text-blue-100 text-sm mt-1">

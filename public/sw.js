@@ -13,10 +13,8 @@ const STATIC_ASSETS = [
   '/contract-test',
   '/debug',
   '/offline',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  '/favicon.ico',
+  '/manifest.webmanifest',
+  '/newlogo.jpeg',
   '/logo.png',
   '/nodara-logo.jpg'
 ];
@@ -129,8 +127,8 @@ async function doBackgroundSync() {
 self.addEventListener('push', (event) => {
   const options = {
     body: event.data ? event.data.text() : 'New notification from Nodara',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    icon: '/newlogo.jpeg',
+    badge: '/newlogo.jpeg',
     vibrate: [100, 50, 100],
     data: {
       dateOfArrival: Date.now(),
@@ -140,12 +138,12 @@ self.addEventListener('push', (event) => {
       {
         action: 'explore',
         title: 'View',
-        icon: '/icons/icon-192x192.png'
+        icon: '/newlogo.jpeg'
       },
       {
         action: 'close',
         title: 'Close',
-        icon: '/icons/icon-192x192.png'
+        icon: '/newlogo.jpeg'
       }
     ]
   };

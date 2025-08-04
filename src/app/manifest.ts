@@ -23,63 +23,63 @@ export default function manifest(): MetadataRoute.Manifest {
     prefer_related_applications: false,
     icons: [
       {
-        src: "/icons/icon-16x16.png",
+        src: "/newlogo.jpeg",
         sizes: "16x16",
-        type: "image/png",
+        type: "image/jpeg",
         purpose: "any"
       },
       {
-        src: "/icons/icon-32x32.png",
+        src: "/newlogo.jpeg",
         sizes: "32x32",
-        type: "image/png",
+        type: "image/jpeg",
         purpose: "any"
       },
       {
-        src: "/icons/icon-72x72.png",
+        src: "/newlogo.jpeg",
         sizes: "72x72",
-        type: "image/png",
+        type: "image/jpeg",
         purpose: "maskable"
       },
       {
-        src: "/icons/icon-96x96.png",
+        src: "/newlogo.jpeg",
         sizes: "96x96",
-        type: "image/png",
+        type: "image/jpeg",
         purpose: "maskable"
       },
       {
-        src: "/icons/icon-128x128.png",
+        src: "/newlogo.jpeg",
         sizes: "128x128",
-        type: "image/png",
+        type: "image/jpeg",
         purpose: "maskable"
       },
       {
-        src: "/icons/icon-144x144.png",
+        src: "/newlogo.jpeg",
         sizes: "144x144",
-        type: "image/png",
+        type: "image/jpeg",
         purpose: "maskable"
       },
       {
-        src: "/icons/icon-152x152.png",
+        src: "/newlogo.jpeg",
         sizes: "152x152",
-        type: "image/png",
+        type: "image/jpeg",
         purpose: "maskable"
       },
       {
-        src: "/icons/icon-192x192.png",
+        src: "/newlogo.jpeg",
         sizes: "192x192",
-        type: "image/png",
+        type: "image/jpeg",
         purpose: "maskable"
       },
       {
-        src: "/icons/icon-384x384.png",
+        src: "/newlogo.jpeg",
         sizes: "384x384",
-        type: "image/png",
+        type: "image/jpeg",
         purpose: "maskable"
       },
       {
-        src: "/icons/icon-512x512.png",
+        src: "/newlogo.jpeg",
         sizes: "512x512",
-        type: "image/png",
+        type: "image/jpeg",
         purpose: "maskable"
       }
     ],
@@ -100,7 +100,7 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "/dashboard",
         icons: [
           {
-            src: "/icons/icon-96x96.png",
+            src: "/newlogo.jpeg",
             sizes: "96x96"
           }
         ]
@@ -112,7 +112,7 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "/analytics",
         icons: [
           {
-            src: "/icons/icon-96x96.png",
+            src: "/newlogo.jpeg",
             sizes: "96x96"
           }
         ]

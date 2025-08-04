@@ -37,16 +37,16 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icons/icon-16x16.png", sizes: "16x16", type: "image/png" },
-      { url: "/icons/icon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" }
+      { url: "/newlogo.jpeg", sizes: "16x16", type: "image/jpeg" },
+      { url: "/newlogo.jpeg", sizes: "32x32", type: "image/jpeg" },
+      { url: "/newlogo.jpeg", sizes: "192x192", type: "image/jpeg" },
+      { url: "/newlogo.jpeg", sizes: "512x512", type: "image/jpeg" }
     ],
     apple: [
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" }
+      { url: "/newlogo.jpeg", sizes: "192x192", type: "image/jpeg" }
     ],
     shortcut: [
-      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" }
+      { url: "/newlogo.jpeg", sizes: "192x192", type: "image/jpeg" }
     ]
   },
   other: {
@@ -84,7 +84,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="16x16" href="/icons/icon-16x16.png" />
         <link rel="manifest" href="/manifest.webmanifest" />
         <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#000000" />
-        <link rel="shortcut icon" href="/favicon.ico" />
+        <link rel="shortcut icon" href="/newlogo.jpeg" />
         <link rel="image_src" href="/logo.png" />
       </head>
       <body>
