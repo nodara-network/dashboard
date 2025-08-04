@@ -2,11 +2,30 @@
 
 import { useState, useEffect } from 'react';
 
+interface NavigatorWithStandalone extends Navigator {
+  standalone?: boolean;
+}
+
 export function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
+    const checkIfInstalled = () => {
+      if (window.matchMedia('(display-mode: standalone)').matches) {
+        setIsInstalled(true);
+        return;
+      }
+      
+      if ((navigator as NavigatorWithStandalone).standalone === true) {
+        setIsInstalled(true);
+        return;
+      }
+    };
+
+    checkIfInstalled();
+
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -23,17 +42,19 @@ export function PWAInstallPrompt() {
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
 
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
-    } else {
-      console.log('User dismissed the install prompt');
+    try {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        setIsInstalled(true);
+        setShowInstallPrompt(false);
+      }
+    } catch (error) {
+      console.error('Install prompt error:', error);
     }
     
     setDeferredPrompt(null);
-    setShowInstallPrompt(false);
   };
 
   const handleDismiss = () => {
@@ -41,29 +62,38 @@ export function PWAInstallPrompt() {
     setDeferredPrompt(null);
   };
 
-  if (!showInstallPrompt) return null;
+  if (isInstalled || !showInstallPrompt) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 bg-gray-900 border border-gray-700 rounded-lg p-4 shadow-lg z-50">
+    <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 border border-blue-500 rounded-xl p-4 shadow-2xl z-50 animate-pulse">
       <div className="flex items-center justify-between">
         <div className="flex-1">
-          <h3 className="text-white font-semibold">Install Nodara</h3>
-          <p className="text-gray-400 text-sm mt-1">
-            Add Nodara to your home screen for quick access
-          </p>
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-white font-bold text-lg">Install Nodara</h3>
+              <p className="text-blue-100 text-sm mt-1">
+                Get the full app experience with offline access
+              </p>
+            </div>
+          </div>
         </div>
         <div className="flex space-x-2 ml-4">
           <button
             onClick={handleInstallClick}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors"
+            className="bg-white hover:bg-gray-100 text-blue-600 px-6 py-2 rounded-lg text-sm font-semibold transition-colors shadow-lg"
           >
             Install
           </button>
           <button
             onClick={handleDismiss}
-            className="text-gray-400 hover:text-white px-4 py-2 rounded text-sm transition-colors"
+            className="text-white/80 hover:text-white px-4 py-2 rounded-lg text-sm transition-colors"
           >
-            Dismiss
+            Later
           </button>
         </div>
       </div>

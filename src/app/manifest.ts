@@ -17,7 +17,23 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: "#000000",
     orientation: "portrait-primary",
     scope: "/",
+    lang: "en",
+    dir: "ltr",
+    categories: ["business", "productivity", "utilities", "finance"],
+    prefer_related_applications: false,
     icons: [
+      {
+        src: "/icons/icon-16x16.png",
+        sizes: "16x16",
+        type: "image/png",
+        purpose: "any"
+      },
+      {
+        src: "/icons/icon-32x32.png",
+        sizes: "32x32",
+        type: "image/png",
+        purpose: "any"
+      },
       {
         src: "/icons/icon-72x72.png",
         sizes: "72x72",
@@ -67,8 +83,40 @@ export default function manifest(): MetadataRoute.Manifest {
         purpose: "maskable"
       }
     ],
-    categories: ["business", "productivity", "utilities"],
-    lang: "en",
-    dir: "ltr"
+    screenshots: [
+      {
+        src: "/open-graph.png",
+        sizes: "1280x720",
+        type: "image/png",
+        form_factor: "wide",
+        label: "Nodara Dashboard"
+      }
+    ],
+    shortcuts: [
+      {
+        name: "Dashboard",
+        short_name: "Dashboard",
+        description: "View your Nodara dashboard",
+        url: "/dashboard",
+        icons: [
+          {
+            src: "/icons/icon-96x96.png",
+            sizes: "96x96"
+          }
+        ]
+      },
+      {
+        name: "Analytics",
+        short_name: "Analytics",
+        description: "View analytics and insights",
+        url: "/analytics",
+        icons: [
+          {
+            src: "/icons/icon-96x96.png",
+            sizes: "96x96"
+          }
+        ]
+      }
+    ]
   };
 }
