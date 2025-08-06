@@ -73,7 +73,41 @@ export function useWebSocketConnection() {
     }));
 
     try {
-      const wsUrl = `wss://ws.nodara.network?publicKey=${encodeURIComponent(publicKey.toString())}`;
+      // Use localhost for development, production URL for deployed version
+      const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+      const wsUrl = isDevelopment 
+        ? `ws://localhost:8080?publicKey=${encodeURIComponent(publicKey.toString())}`
+        : `wss://ws.nodara.network?publicKey=${encodeURIComponent(publicKey.toString())}`;
+      
+      // For development, simulate connection success without actual WebSocket
+      if (isDevelopment && window.location.hostname === 'localhost') {
+        console.log('🔧 Development mode: simulating WebSocket connection');
+        
+        // Simulate connection success after a short delay
+        setTimeout(() => {
+          setConnectionState(prev => ({
+            ...prev,
+            isConnected: true,
+            isConnecting: false,
+            error: null,
+            lastHeartbeat: new Date()
+          }));
+          
+          // Simulate periodic heartbeats
+          const heartbeatInterval = setInterval(() => {
+            setConnectionState(prev => ({
+              ...prev,
+              lastHeartbeat: new Date()
+            }));
+          }, 30000);
+          
+          heartbeatIntervalRef.current = heartbeatInterval;
+          console.log('🚀 Simulated connection to Nodara WebSocket network');
+        }, 1000);
+        
+        return true;
+      }
+      
       const ws = new WebSocket(wsUrl);
       
       // Set connection timeout

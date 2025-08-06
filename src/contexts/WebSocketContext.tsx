@@ -18,11 +18,16 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const { connected: walletConnected } = useWallet();
   const { connectionState, connect, disconnect, sendMessage, isWalletRequired } = useWebSocketConnection();
 
-  // Auto-connect when wallet becomes available
+  // Auto-connect when wallet becomes available (disabled for development to prevent loops)
   useEffect(() => {
+    const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+    
     if (walletConnected && !connectionState.isConnected && !connectionState.isConnecting) {
-      console.log('🔗 Wallet connected, auto-connecting to WebSocket...');
-      connect();
+      // Only auto-connect in production or when explicitly requested
+      if (!isDevelopment) {
+        console.log('🔗 Wallet connected, auto-connecting to WebSocket...');
+        connect();
+      }
     }
   }, [walletConnected, connectionState.isConnected, connectionState.isConnecting, connect]);
 
