@@ -111,7 +111,6 @@ We welcome contributions from developers, designers, and blockchain enthusiasts!
 - **Reporting**: Generate insights for protocol optimization
 
 ## Getting Started
-
 ### Prerequisites
 - Node.js 18+ and npm/yarn
 - Solana CLI tools
