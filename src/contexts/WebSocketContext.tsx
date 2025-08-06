@@ -8,6 +8,7 @@ interface WebSocketContextType {
   connectionState: WebSocketConnectionState;
   connect: () => Promise<boolean>;
   disconnect: () => void;
+  resetConnection: () => void;
   sendMessage: (message: any) => boolean;
   isWalletRequired: boolean;
 }
@@ -16,11 +17,11 @@ const WebSocketContext = createContext<WebSocketContextType | undefined>(undefin
 
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const { connected: walletConnected } = useWallet();
-  const { connectionState, connect, disconnect, sendMessage, isWalletRequired } = useWebSocketConnection();
+  const { connectionState, connect, disconnect, resetConnection, sendMessage, isWalletRequired } = useWebSocketConnection();
 
   // Auto-connect when wallet becomes available (disabled for development to prevent loops)
   useEffect(() => {
-    const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+    const isDevelopment = process.env.NODE_ENV === 'development' || (typeof window !== 'undefined' && window.location.hostname === 'localhost');
     
     if (walletConnected && !connectionState.isConnected && !connectionState.isConnecting) {
       // Only auto-connect in production or when explicitly requested
@@ -43,6 +44,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     connectionState,
     connect,
     disconnect,
+    resetConnection,
     sendMessage,
     isWalletRequired
   };

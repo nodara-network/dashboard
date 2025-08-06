@@ -65,7 +65,7 @@ export function PWAInstallPrompt() {
   if (isInstalled || !showInstallPrompt) return null;
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 border border-blue-500 rounded-xl p-4 shadow-2xl z-50 animate-pulse">
+    <div className="fixed bottom-4 left-4 right-4 bg-gradient-to-r from-blue-600 to-purple-600 border border-blue-500 rounded-xl p-4 shadow-2xl z-50 animate-pulse" suppressHydrationWarning>
       <div className="flex items-center justify-between">
         <div className="flex-1">
                       <div className="flex items-center space-x-3">

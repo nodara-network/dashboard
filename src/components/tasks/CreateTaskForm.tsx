@@ -8,14 +8,14 @@ export function CreateTaskForm() {
   const [rewardPerResponse, setRewardPerResponse] = useState("");
   const [maxResponses, setMaxResponses] = useState("");
   const [deadline, setDeadline] = useState("");
-  const [cid, setCid] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("www.");
 
   const { createTask } = useSmartContractsProgramAccount();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!taskId || !rewardPerResponse || !maxResponses || !deadline || !cid) {
+    if (!taskId || !rewardPerResponse || !maxResponses || !deadline || !websiteUrl) {
       alert("Please fill all fields");
       return;
     }
@@ -26,7 +26,7 @@ export function CreateTaskForm() {
         rewardPerResponse: parseInt(rewardPerResponse),
         maxResponses: parseInt(maxResponses),
         deadline: Math.floor(new Date(deadline).getTime() / 1000),
-        cid: cid,
+        cid: websiteUrl,
       });
       
       // Reset form
@@ -34,7 +34,7 @@ export function CreateTaskForm() {
       setRewardPerResponse("");
       setMaxResponses("");
       setDeadline("");
-      setCid("");
+      setWebsiteUrl("www.");
     } catch (error) {
       console.error("Failed to create task:", error);
     }
@@ -98,14 +98,14 @@ export function CreateTaskForm() {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Content ID (CID)
+            Website URL
           </label>
           <input
-            type="text"
-            value={cid}
-            onChange={(e) => setCid(e.target.value)}
+            type="url"
+            value={websiteUrl}
+            onChange={(e) => setWebsiteUrl(e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="IPFS CID or task description"
+            placeholder="www.example.com"
           />
         </div>
 

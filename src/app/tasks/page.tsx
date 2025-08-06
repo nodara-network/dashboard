@@ -151,7 +151,7 @@ function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
     reward: '',
     maxResponses: '',
     deadline: '',
-    cid: ''
+    websiteUrl: 'www.'
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -167,7 +167,7 @@ function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
         rewardPerResponse: rewardInLamports,
         maxResponses: parseInt(formData.maxResponses),
         deadline,
-        cid: formData.cid
+        cid: formData.websiteUrl
       });
 
       toast.success('Task created successfully!');
@@ -244,18 +244,18 @@ function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
           
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              IPFS CID
+              Website URL
             </label>
             <input
-              type="text"
-              value={formData.cid}
-              onChange={(e) => setFormData({...formData, cid: e.target.value})}
+              type="url"
+              value={formData.websiteUrl}
+              onChange={(e) => setFormData({...formData, websiteUrl: e.target.value})}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-cyan-500 focus:border-transparent"
-              placeholder="QmExample..."
+              placeholder="www.example.com"
               required
             />
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              IPFS hash containing task details
+              Website URL for the task
             </p>
           </div>
         </div>
@@ -353,10 +353,8 @@ function TaskList({ tasks, loading, connected, setActiveTab }: {
 }
 
 function TaskCard({ task }: { task: any }) {
-  const { markTaskComplete, submitResponse } = useSmartContractsProgramAccount();
+  const { markTaskComplete } = useSmartContractsProgramAccount();
   const { publicKey } = useWallet();
-  const [responseCid, setResponseCid] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Extract task data from the blockchain response
   const taskData = task.account;
@@ -368,7 +366,6 @@ function TaskCard({ task }: { task: any }) {
   
   const rewardInSol = taskData.rewardPerResponse / 1e9; // Convert from lamports to SOL
   const isCreator = publicKey && taskData.creator.toString() === publicKey.toString();
-  const canSubmitResponse = !isExpired && !taskData.isComplete && publicKey;
   
   // Debug logging
   console.log('Task Debug:', {
@@ -376,9 +373,7 @@ function TaskCard({ task }: { task: any }) {
     isExpired,
     isComplete: taskData.isComplete,
     hasPublicKey: !!publicKey,
-    canSubmitResponse,
-    publicKey: publicKey?.toString(),
-    shouldShowSubmit: publicKey && !taskData.isComplete
+    publicKey: publicKey?.toString()
   });
 
   const handleMarkComplete = async () => {
@@ -396,25 +391,7 @@ function TaskCard({ task }: { task: any }) {
     }
   };
 
-  const handleSubmitResponse = async () => {
-    if (!canSubmitResponse || !responseCid.trim()) return;
-    
-    try {
-      setIsSubmitting(true);
-      await submitResponse.mutateAsync({
-        taskId: taskData.taskId,
-        creator: taskData.creator,
-        cid: responseCid.trim()
-      });
-      setResponseCid('');
-      toast.success('Response submitted successfully!');
-    } catch (error: any) {
-      console.error('Failed to submit response:', error);
-      toast.error(`Failed to submit response: ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+
 
   return (
     <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
@@ -523,33 +500,7 @@ function TaskCard({ task }: { task: any }) {
         </div>
       </div>
 
-      {/* Response Submission Section */}
-      {publicKey && !taskData.isComplete && (
-        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">
-            Submit Your Response
-          </h4>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              value={responseCid}
-              onChange={(e) => setResponseCid(e.target.value)}
-              placeholder="Enter IPFS CID (e.g., QmX...)"
-              className="flex-1 px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-            />
-            <button
-              onClick={handleSubmitResponse}
-              disabled={isSubmitting || !responseCid.trim() || isExpired}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50"
-            >
-              {isSubmitting ? 'Submitting...' : isExpired ? 'Task Expired' : 'Submit Response'}
-            </button>
-          </div>
-          <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-            {isExpired ? 'This task has expired and cannot accept new responses.' : 'Upload your result to IPFS and enter the CID here to submit your response.'}
-          </p>
-        </div>
-      )}
+
       
       {/* Force show for debugging */}
       {!publicKey && (

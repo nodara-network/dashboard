@@ -73,14 +73,17 @@ export function useWebSocketConnection() {
     }));
 
     try {
-      // Use localhost for development, production URL for deployed version
-      const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
-      const wsUrl = isDevelopment 
+      // Use localhost for development, production URL for deployed version  
+      const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+      const isDevelopment = process.env.NODE_ENV === 'development';
+      const wsUrl = (isDevelopment || isLocalhost)
         ? `ws://localhost:8080?publicKey=${encodeURIComponent(publicKey.toString())}`
         : `wss://ws.nodara.network?publicKey=${encodeURIComponent(publicKey.toString())}`;
       
+      console.log(`🔗 Connecting to WebSocket: ${wsUrl} (dev: ${isDevelopment}, localhost: ${isLocalhost})`);
+      
       // For development, simulate connection success without actual WebSocket
-      if (isDevelopment && window.location.hostname === 'localhost') {
+      if (isDevelopment && isLocalhost) {
         console.log('🔧 Development mode: simulating WebSocket connection');
         
         // Simulate connection success after a short delay
@@ -160,11 +163,35 @@ export function useWebSocketConnection() {
         wsRef.current = null;
         
         const wasConnected = connectionState.isConnected;
+        
+        let errorMessage = null;
+        if (event.code !== 1000) {
+          switch (event.code) {
+            case 1001:
+              errorMessage = 'Connection closed: Server going away';
+              break;
+            case 1002:
+              errorMessage = 'Connection closed: Protocol error';
+              break;
+            case 1003:
+              errorMessage = 'Connection closed: Unsupported data';
+              break;
+            case 1006:
+              errorMessage = 'Connection closed: Abnormal closure (network issue)';
+              break;
+            case 1011:
+              errorMessage = 'Connection closed: Server error';
+              break;
+            default:
+              errorMessage = `Connection closed: ${event.reason || `Code ${event.code}`}`;
+          }
+        }
+        
         setConnectionState(prev => ({
           ...prev,
           isConnected: false,
           isConnecting: false,
-          error: event.code !== 1000 ? `Connection closed: ${event.reason || 'Unknown reason'}` : null
+          error: errorMessage
         }));
 
         // Auto-reconnect if it was an unexpected disconnection
@@ -172,14 +199,20 @@ export function useWebSocketConnection() {
           const delay = Math.min(1000 * Math.pow(2, reconnectAttempts.current), 30000);
           reconnectAttempts.current++;
           
-          console.log(`🔄 Attempting to reconnect in ${delay}ms (attempt ${reconnectAttempts.current}/${maxReconnectAttempts})`);
+          console.log(`🔄 Attempting to reconnect in ${delay}ms (attempt ${reconnectAttempts.current}/${maxReconnectAttempts}) - Code: ${event.code}`);
           
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, delay);
+        } else if (reconnectAttempts.current >= maxReconnectAttempts) {
+          console.log('❌ Max reconnection attempts reached');
+          setConnectionState(prev => ({
+            ...prev,
+            error: 'Connection failed after multiple attempts. Please try manually reconnecting.'
+          }));
         }
 
-        console.log('🔌 Disconnected from Nodara network');
+        console.log(`🔌 Disconnected from Nodara network - Code: ${event.code}, Reason: ${event.reason || 'No reason provided'}`);
       };
 
       ws.onerror = (error) => {
@@ -222,6 +255,14 @@ export function useWebSocketConnection() {
     console.log('🛑 Manually disconnected from Nodara network');
   }, [clearTimers]);
 
+  const resetConnection = useCallback(() => {
+    reconnectAttempts.current = 0;
+    setConnectionState(prev => ({
+      ...prev,
+      error: null
+    }));
+  }, []);
+
   const sendMessage = useCallback((message: any) => {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(message));
@@ -234,6 +275,7 @@ export function useWebSocketConnection() {
     connectionState,
     connect,
     disconnect,
+    resetConnection,
     sendMessage,
     isWalletRequired: !walletConnected || !publicKey
   };

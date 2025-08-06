@@ -7,7 +7,7 @@ import { WalletButton } from '@/components/solana/SolanaProvider';
 
 export default function PowerButton() {
   const { connected: walletConnected } = useWallet();
-  const { connectionState, connect, disconnect, isWalletRequired } = useWebSocket();
+  const { connectionState, connect, disconnect, resetConnection, isWalletRequired } = useWebSocket();
   const [connectionTime, setConnectionTime] = React.useState<Date | null>(null);
   const [uptime, setUptime] = React.useState<string>('00:00:00');
 
@@ -42,6 +42,10 @@ export default function PowerButton() {
     if (connectionState.isConnected) {
       disconnect();
     } else {
+      // Reset connection attempts if there was a previous error
+      if (connectionState.error) {
+        resetConnection();
+      }
       await connect();
     }
   };
@@ -129,8 +133,16 @@ export default function PowerButton() {
         </div>
         
         {connectionState.error && (
-          <div className="text-sm text-red-400">
+          <div className="text-sm text-red-400 max-w-sm text-center">
             {connectionState.error}
+            <div className="mt-2">
+              <button 
+                onClick={handlePowerToggle}
+                className="text-xs text-red-300 hover:text-red-100 underline"
+              >
+                Try Again
+              </button>
+            </div>
           </div>
         )}
       </div>

@@ -10,7 +10,7 @@ export interface TaskAccount {
   responsesReceived: number;
   isComplete: boolean;
   bump: number;
-  cid: string;
+  cid: string; // Website URL (repurposed from IPFS CID)
 }
 
 export interface ResponseAccount {
@@ -19,7 +19,7 @@ export interface ResponseAccount {
   timestamp: number; // Unix timestamp
   isVerified: boolean;
   bump: number;
-  cid: string;
+  cid: string; // Response data (could be URL or content)
 }
 
 export interface RewardVaultAccount {
@@ -40,7 +40,7 @@ export interface Task {
   deadline: Date;
   status: 'active' | 'completed' | 'cancelled';
   creator: string;
-  cid: string;
+  cid: string; // Website URL
   isComplete: boolean;
   responsesReceived: number;
 }
@@ -51,7 +51,7 @@ export interface CreateTaskData {
   rewardPerResponse: number;
   maxResponses: number;
   deadline: Date;
-  cid: string;
+  cid: string; // Website URL
 }
 
 // Task Response Data
@@ -59,7 +59,7 @@ export interface TaskResponse {
   id: string;
   taskId: string;
   responder: string;
-  cid: string;
+  cid: string; // Response data
   timestamp: Date;
   isVerified: boolean;
 }

@@ -32,7 +32,7 @@ export function PWAStatus() {
   if (!isPWA && !isStandalone) return null;
 
   return (
-    <div className="fixed top-4 right-4 bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-lg z-40">
+    <div className="fixed top-4 right-4 bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-lg z-40" suppressHydrationWarning>
       <div className="flex items-center space-x-2">
         <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-500' : 'bg-red-500'}`} />
         <span className="text-white text-sm">
