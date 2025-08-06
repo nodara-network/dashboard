@@ -4,6 +4,7 @@ import DevicesOverview from "@/components/dashboard/DevicesOverview";
 import AnalyticsOverview from "@/components/dashboard/AnalyticsOverview";
 import NodeDashboardOverview from "@/components/dashboard/NodeDashboardOverview";
 import TasksOverview from "@/components/dashboard/TasksOverview";
+import { AdminInitializer } from "@/components/admin/AdminInitializer";
 
 export default function Dashboard() {
   return (
@@ -19,6 +20,11 @@ export default function Dashboard() {
             <p className="text-lg text-gray-600 dark:text-gray-300">
               Welcome to the Nodara Network. Monitor your services, devices, analytics, node performance, and task management.
             </p>
+          </div>
+
+          {/* Admin Initializer */}
+          <div className="mb-8">
+            <AdminInitializer />
           </div>
 
           {/* Overview Grid */}

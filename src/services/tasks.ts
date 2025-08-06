@@ -240,7 +240,7 @@ export class TaskService {
     return [
       {
         id: '1',
-        taskAccount: new PublicKey('11111111111111111111111111111111'),
+        taskAccount: new PublicKey('11111111111111111111111111111112'),
         title: 'Image Processing Task',
         description: 'Process and analyze satellite imagery for agricultural monitoring',
         reward: 0.5,
@@ -248,14 +248,14 @@ export class TaskService {
         maxResponses: 5,
         deadline: new Date(Date.now() + 86400000),
         status: TaskStatus.ACTIVE,
-        creator: '11111111111111111111111111111111',
+        creator: '11111111111111111111111111111112',
         cid: 'QmX...abc',
         isComplete: false,
         responsesReceived: 3
       },
       {
         id: '2',
-        taskAccount: new PublicKey('22222222222222222222222222222222'),
+        taskAccount: new PublicKey('11111111111111111111111111111113'),
         title: 'Data Analysis Request',
         description: 'Analyze customer behavior patterns from e-commerce dataset',
         reward: 1.2,
@@ -263,14 +263,14 @@ export class TaskService {
         maxResponses: 3,
         deadline: new Date(Date.now() + 172800000),
         status: TaskStatus.ACTIVE,
-        creator: '22222222222222222222222222222222',
+        creator: '11111111111111111111111111111113',
         cid: 'QmY...def',
         isComplete: false,
         responsesReceived: 2
       },
       {
         id: '3',
-        taskAccount: new PublicKey('33333333333333333333333333333333'),
+        taskAccount: new PublicKey('11111111111111111111111111111114'),
         title: 'ML Model Training',
         description: 'Train a sentiment analysis model on social media data',
         reward: 2.0,
@@ -278,7 +278,7 @@ export class TaskService {
         maxResponses: 2,
         deadline: new Date(Date.now() - 3600000),
         status: TaskStatus.COMPLETED,
-        creator: '33333333333333333333333333333333',
+        creator: '11111111111111111111111111111114',
         cid: 'QmZ...ghi',
         isComplete: true,
         responsesReceived: 1

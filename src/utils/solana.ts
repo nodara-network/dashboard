@@ -3,7 +3,7 @@ import { PublicKey } from "@solana/web3.js";
 import idl from "../../target/idl/smart_contracts.json";
 import { SmartContracts } from '../../target/types/smart_contracts';
 
-export const programId = new PublicKey("5rA6ZXgbDsW96eqXneKUBCP69bBn2e4yERmMKuTGkjAQ");
+export const programId = new PublicKey("NDRAKc9KJzfX2ymdJQ7Ad3sr4FSdP7wixVoTVTWt7hU");
 
 export function getProgram(provider: AnchorProvider): Program<SmartContracts> {
   return new Program(idl as any, provider);

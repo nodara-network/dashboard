@@ -2,12 +2,14 @@
 
 import { AnchorProvider } from '@coral-xyz/anchor'
 import { WalletError } from '@solana/wallet-adapter-base'
-import { AnchorWallet, ConnectionProvider, useWallet, WalletProvider } from '@solana/wallet-adapter-react'
+import { AnchorWallet, ConnectionProvider, useConnection, useWallet, WalletProvider } from '@solana/wallet-adapter-react'
 import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui'
+import { PhantomWalletAdapter, SolflareWalletAdapter } from '@solana/wallet-adapter-wallets'
 import '@solana/wallet-adapter-react-ui/styles.css'
 import { Connection } from '@solana/web3.js'
 import dynamic from 'next/dynamic'
-import { ReactNode, useCallback } from 'react'
+import { ReactNode, useCallback, useMemo } from 'react'
+import { useCluster } from '@/components/cluster/cluster-data-access'
 
 export const WalletButton = () => (
    <WalletMultiButton style={{
@@ -24,13 +26,23 @@ export const WalletButton = () => (
 );
 
 export function SolanaProvider({ children }: { children: ReactNode }) {
+  const { cluster } = useCluster()
+  
+  const wallets = useMemo(() => [
+    new PhantomWalletAdapter(),
+    new SolflareWalletAdapter(),
+  ], [])
+  
   const onError = useCallback((error: WalletError) => {
-    console.error(error)
+    console.error('Wallet error:', error)
   }, [])
 
+  // Force devnet for now to avoid localhost caching issues
+  const endpoint = cluster.name === 'local' ? 'https://api.devnet.solana.com' : cluster.endpoint
+
   return (
-    <ConnectionProvider endpoint={"http://localhost:8899"}>
-      <WalletProvider wallets={[]} onError={onError} autoConnect={true}>
+    <ConnectionProvider endpoint={endpoint}>
+      <WalletProvider wallets={wallets} onError={onError} autoConnect={true}>
         <WalletModalProvider>{children}</WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>
@@ -38,7 +50,7 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
 }
 
 export function useAnchorProvider() {
-  const connection = new Connection("http://localhost:8899", 'confirmed')
+  const { connection } = useConnection()
   const wallet = useWallet()
 
   return new AnchorProvider(connection, wallet as AnchorWallet, { commitment: 'confirmed' })

@@ -11,7 +11,6 @@ import { WalletButton } from '@/components/solana/SolanaProvider';
 import { AdminPanel } from '@/components/tasks/AdminPanel';
 import { useAdminAccess } from '@/hooks/useAdminAccess';
 import { toast } from 'sonner';
-import { mockTasks, mockStats } from '@/services/mockData';
 
 export default function TasksPage() {
   const [activeTab, setActiveTab] = useState<'all' | 'active' | 'completed' | 'create' | 'admin'>('all');
@@ -25,23 +24,9 @@ export default function TasksPage() {
     submitResponse 
   } = useSmartContractsProgramAccount();
 
-  // Mock loading state for pitch deck
-  const loading = false;
-
-  // Use mock data for pitch deck
-  const tasks = mockTasks.map(task => ({
-    publicKey: { toString: () => `mock-${task.taskId}` },
-    account: {
-      taskId: task.taskId,
-      creator: { toString: () => task.creator },
-      rewardPerResponse: { toNumber: () => task.rewardPerResponse * 1e9 }, // Convert to lamports
-      maxResponses: task.maxResponses,
-      responsesReceived: task.responsesReceived,
-      deadline: task.deadline,
-      cid: task.cid,
-      isComplete: task.isComplete
-    }
-  }));
+  // Use real blockchain data
+  const loading = getAllTasks.isLoading;
+  const tasks = getAllTasks.data || [];
 
   const activeTasks = tasks.filter((task: any) => !task.account.isComplete);
   const completedTasks = tasks.filter((task: any) => task.account.isComplete);
@@ -52,36 +37,19 @@ export default function TasksPage() {
     ? activeTasks
     : completedTasks;
 
+  // Calculate real stats from blockchain data
   const stats = [
-    { label: "Total Tasks", value: mockStats.totalTasks.toString() },
-    { label: "Active Tasks", value: mockStats.activeTasks.toString() },
-    { label: "Completed", value: mockStats.completedTasks.toString() },
-    { label: "Total SOL", value: mockStats.totalRewards.toFixed(4) },
-    { label: "Avg Reward", value: mockStats.averageReward.toFixed(3) + " SOL" },
-    { label: "Total Responses", value: mockStats.totalResponses.toString() },
+    { label: "Total Tasks", value: tasks.length.toString() },
+    { label: "Active Tasks", value: activeTasks.length.toString() },
+    { label: "Completed", value: completedTasks.length.toString() },
+    { label: "Total SOL", value: tasks.reduce((sum: number, task: any) => 
+        sum + (task.account.rewardPerResponse.toNumber() / 1e9), 0).toFixed(4) },
+    { label: "Avg Reward", value: tasks.length > 0 ? 
+        (tasks.reduce((sum: number, task: any) => 
+          sum + (task.account.rewardPerResponse.toNumber() / 1e9), 0) / tasks.length).toFixed(3) + " SOL" : "0 SOL" },
+    { label: "Total Responses", value: tasks.reduce((sum: number, task: any) => 
+        sum + task.account.responsesReceived, 0).toString() },
   ];
-
-  if (!connected) {
-    return (
-      <PageLayout>
-        <PageHeader
-          title="Task Management"
-          description="Create, manage, and monitor your distributed compute tasks"
-        />
-        
-        <div className="flex flex-col items-center justify-center py-16">
-          <div className="text-6xl mb-6">🔌</div>
-          <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-            Connect Your Wallet
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-8 text-center max-w-md">
-            Please connect your Solana wallet to create and manage tasks on the blockchain.
-          </p>
-          <WalletButton />
-        </div>
-      </PageLayout>
-    );
-  }
 
   return (
     <PageLayout>
@@ -93,16 +61,27 @@ export default function TasksPage() {
       {/* Action Button */}
       <div className="mb-8 flex justify-between items-center">
         <div className="flex items-center space-x-4">
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Connected: <span className="font-mono text-xs">{publicKey?.toString().slice(0, 8)}...{publicKey?.toString().slice(-8)}</span>
-          </div>
+          {connected ? (
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Connected: <span className="font-mono text-xs">{publicKey?.toString().slice(0, 8)}...{publicKey?.toString().slice(-8)}</span>
+            </div>
+          ) : (
+            <div className="text-sm text-gray-600 dark:text-gray-400">
+              Wallet not connected
+            </div>
+          )}
         </div>
-        <button
-          onClick={() => setActiveTab('create')}
-          className="px-6 py-2 bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400 rounded-lg font-medium hover:bg-cyan-200 dark:hover:bg-cyan-900/50 transition-all duration-200"
-        >
-          Create New Task
-        </button>
+        <div className="flex items-center space-x-3">
+          {connected && (
+            <button
+              onClick={() => setActiveTab('create')}
+              className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-all duration-200"
+            >
+              Create Task
+            </button>
+          )}
+          <WalletButton />
+        </div>
       </div>
 
       {/* Stats Grid */}
@@ -153,18 +132,13 @@ export default function TasksPage() {
               title="Task Categories"
               description="Distribution of tasks across different categories"
             >
-              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
-                {Object.entries(mockStats.categories).map(([category, count]) => (
-                  <div key={category} className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div className="text-lg font-semibold text-gray-900 dark:text-white">{count}</div>
-                    <div className="text-xs text-gray-600 dark:text-gray-400">{category}</div>
-                  </div>
-                ))}
+              <div className="text-center py-8 text-gray-600 dark:text-gray-400">
+                <p>Task categories will be displayed here when tasks are created</p>
               </div>
             </ChartCard>
           </div>
           
-          <TaskList tasks={filteredTasks} loading={loading} />
+          <TaskList tasks={filteredTasks} loading={loading} connected={connected} setActiveTab={setActiveTab} />
         </>
       )}
     </PageLayout>
@@ -326,7 +300,12 @@ function CreateTaskForm({ onCancel }: { onCancel: () => void }) {
   );
 }
 
-function TaskList({ tasks, loading }: { tasks: any[], loading: boolean }) {
+function TaskList({ tasks, loading, connected, setActiveTab }: { 
+  tasks: any[], 
+  loading: boolean,
+  connected?: boolean,
+  setActiveTab?: (tab: 'all' | 'active' | 'completed' | 'create' | 'admin') => void
+}) {
   return (
     <ChartCard
       title="Task List"
@@ -348,7 +327,20 @@ function TaskList({ tasks, loading }: { tasks: any[], loading: boolean }) {
               </svg>
             </div>
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No tasks found</h3>
-            <p className="text-gray-600 dark:text-gray-400">Create your first task to get started</p>
+            <p className="text-gray-600 dark:text-gray-400 mb-6">Create your first task to get started</p>
+            {connected ? (
+              <button
+                onClick={() => setActiveTab?.('create')}
+                className="px-6 py-3 bg-cyan-600 hover:bg-cyan-700 text-white rounded-lg font-medium transition-all duration-200"
+              >
+                Create Your First Task
+              </button>
+            ) : (
+              <div className="text-center">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">Connect your wallet to create tasks</p>
+                <WalletButton />
+              </div>
+            )}
           </div>
         ) : (
           tasks.map((task, index) => (
@@ -361,15 +353,14 @@ function TaskList({ tasks, loading }: { tasks: any[], loading: boolean }) {
 }
 
 function TaskCard({ task }: { task: any }) {
-  const { markTaskComplete } = useSmartContractsProgramAccount();
+  const { markTaskComplete, submitResponse } = useSmartContractsProgramAccount();
   const { publicKey } = useWallet();
+  const [responseCid, setResponseCid] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Extract task data from the blockchain response
   const taskData = task.account;
   const taskPubkey = task.publicKey;
-  
-  // Find corresponding mock task for enhanced data
-  const mockTask = mockTasks.find(t => t.taskId === taskData.taskId);
   
   const deadline = new Date(taskData.deadline * 1000); // Convert from Unix timestamp
   const isExpired = deadline < new Date();
@@ -377,7 +368,19 @@ function TaskCard({ task }: { task: any }) {
   
   const rewardInSol = taskData.rewardPerResponse / 1e9; // Convert from lamports to SOL
   const isCreator = publicKey && taskData.creator.toString() === publicKey.toString();
+  const canSubmitResponse = !isExpired && !taskData.isComplete && publicKey;
   
+  // Debug logging
+  console.log('Task Debug:', {
+    taskId: taskData.taskId.toString(),
+    isExpired,
+    isComplete: taskData.isComplete,
+    hasPublicKey: !!publicKey,
+    canSubmitResponse,
+    publicKey: publicKey?.toString(),
+    shouldShowSubmit: publicKey && !taskData.isComplete
+  });
+
   const handleMarkComplete = async () => {
     if (!isCreator) return;
     
@@ -390,6 +393,26 @@ function TaskCard({ task }: { task: any }) {
     } catch (error: any) {
       console.error('Failed to mark task complete:', error);
       toast.error(`Failed to mark task complete: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleSubmitResponse = async () => {
+    if (!canSubmitResponse || !responseCid.trim()) return;
+    
+    try {
+      setIsSubmitting(true);
+      await submitResponse.mutateAsync({
+        taskId: taskData.taskId,
+        creator: taskData.creator,
+        cid: responseCid.trim()
+      });
+      setResponseCid('');
+      toast.success('Response submitted successfully!');
+    } catch (error: any) {
+      console.error('Failed to submit response:', error);
+      toast.error(`Failed to submit response: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -423,15 +446,6 @@ function TaskCard({ task }: { task: any }) {
               <span>Creator: <span className="font-mono text-xs">{taskData.creator.toString().slice(0, 8)}...{taskData.creator.toString().slice(-8)}</span></span>
               <span>IPFS: <span className="font-mono text-xs">{taskData.cid.slice(0, 12)}...</span></span>
             </div>
-            {mockTask && (
-              <div className="mt-2">
-                <div className="text-sm font-medium text-gray-900 dark:text-white">{mockTask.title}</div>
-                <div className="text-xs text-gray-600 dark:text-gray-400">{mockTask.description}</div>
-                <div className="inline-block mt-1 px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded text-xs">
-                  {mockTask.category}
-                </div>
-              </div>
-            )}
           </div>
         </div>
         <div className="text-right">
@@ -497,12 +511,59 @@ function TaskCard({ task }: { task: any }) {
         )}
         
         <button 
-          onClick={() => window.open(`https://explorer.solana.com/address/${taskPubkey.toString()}?cluster=custom&customUrl=http://localhost:8899`, '_blank')}
+          onClick={() => window.open(`https://explorer.solana.com/address/${taskPubkey.toString()}?cluster=devnet`, '_blank')}
           className="px-3 sm:px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-lg text-xs sm:text-sm font-medium hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200"
         >
           View on Explorer
         </button>
+        
+        {/* Debug indicator */}
+        <div className="text-xs text-gray-500 dark:text-gray-400">
+          Debug: {publicKey ? 'Wallet ✓' : 'Wallet ✗'} | {taskData.isComplete ? 'Complete ✗' : 'Active ✓'}
+        </div>
       </div>
+
+      {/* Response Submission Section */}
+      {publicKey && !taskData.isComplete && (
+        <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+          <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100 mb-3">
+            Submit Your Response
+          </h4>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <input
+              type="text"
+              value={responseCid}
+              onChange={(e) => setResponseCid(e.target.value)}
+              placeholder="Enter IPFS CID (e.g., QmX...)"
+              className="flex-1 px-3 py-2 border border-blue-300 dark:border-blue-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+            />
+            <button
+              onClick={handleSubmitResponse}
+              disabled={isSubmitting || !responseCid.trim() || isExpired}
+              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white rounded-lg text-sm font-medium transition-all duration-200 disabled:opacity-50"
+            >
+              {isSubmitting ? 'Submitting...' : isExpired ? 'Task Expired' : 'Submit Response'}
+            </button>
+          </div>
+          <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+            {isExpired ? 'This task has expired and cannot accept new responses.' : 'Upload your result to IPFS and enter the CID here to submit your response.'}
+          </p>
+        </div>
+      )}
+      
+      {/* Force show for debugging */}
+      {!publicKey && (
+        <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-red-600 dark:text-red-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+            </svg>
+            <span className="text-sm font-medium text-red-800 dark:text-red-200">
+              WALLET NOT CONNECTED - Connect your wallet to submit responses
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

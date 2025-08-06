@@ -97,6 +97,7 @@ export default function RootLayout({
         </AppProviders>
         <PWAInstallPrompt />
         <PWAStatus />
+        {/* <ConnectionDebug /> */}
       </body>
     </html>
   );

@@ -4,12 +4,14 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { useSmartContractsProgram } from '@/hooks/useSmartContracts';
 import { useWallet } from '@solana/wallet-adapter-react';
+import { useCluster } from '@/components/cluster/cluster-data-access';
 import { ClipboardDocumentListIcon } from '@heroicons/react/24/outline';
 
 export default function TasksOverview() {
   const [activeTab, setActiveTab] = useState<'overview' | 'recent'>('overview');
   const { getAllTasks } = useSmartContractsProgram();
   const { connected, publicKey } = useWallet();
+  const { cluster } = useCluster();
 
   const { data: tasks = [], isLoading: loading } = getAllTasks;
 
@@ -237,7 +239,7 @@ export default function TasksOverview() {
         <div className="space-y-2">
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-600 dark:text-gray-400">Network:</span>
-            <span className="font-mono text-gray-900 dark:text-white">Localhost</span>
+            <span className="font-mono text-gray-900 dark:text-white capitalize">{cluster.name}</span>
           </div>
           <div className="flex justify-between items-center text-sm">
             <span className="text-gray-600 dark:text-gray-400">Total Tasks:</span>
