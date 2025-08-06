@@ -7,6 +7,7 @@ import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletButton } from '@/components/solana/SolanaProvider';
+import { WebSocketStatus } from './WebSocketStatus';
 import { 
   ChartBarIcon,
   DevicePhoneMobileIcon,
@@ -157,6 +158,11 @@ export default function Navbar() {
           {/* Right side controls */}
           <div className="flex items-center space-x-2">
 
+            {/* WebSocket Status */}
+            <div className="hidden md:flex">
+              <WebSocketStatus variant="minimal" />
+            </div>
+
             {/* Wallet Connect Button */}
             <div className="hidden md:flex">
               <WalletButton />
@@ -288,7 +294,8 @@ export default function Navbar() {
         `}
       >
         <div className="space-y-1 px-4 pb-3 pt-2">
-          <div className="mb-2">
+          <div className="mb-2 space-y-2">
+            <WebSocketStatus variant="detailed" />
             <WalletButton />
           </div>
 

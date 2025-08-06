@@ -1,13 +1,13 @@
 "use client";
 
 import React from 'react';
-import { useWebSocketConnection } from '@/hooks/useWebSocketConnection';
+import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletButton } from '@/components/solana/SolanaProvider';
 
 export default function PowerButton() {
   const { connected: walletConnected } = useWallet();
-  const { connectionState, connect, disconnect, isWalletRequired } = useWebSocketConnection();
+  const { connectionState, connect, disconnect, isWalletRequired } = useWebSocket();
   const [connectionTime, setConnectionTime] = React.useState<Date | null>(null);
   const [uptime, setUptime] = React.useState<string>('00:00:00');
 
